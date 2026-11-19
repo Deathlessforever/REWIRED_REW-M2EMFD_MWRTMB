@@ -27,6 +27,7 @@ checkConnection();
 const POLL_MS = helpers.clampPollMs(window.CHITMIRROR_POLL_MS);
 const LEDGER_STATUS = {
   verified: { label: "Verified", symbol: "✓" },
+  manual_approved: { label: "Manual approval", symbol: "✓" },
   needs_review: { label: "Needs review", symbol: "!" },
   overdue: { label: "Overdue", symbol: "!" },
   rejected: { label: "Rejected", symbol: "×" },
