@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import httpx
+from dotenv import load_dotenv
 
 
 SARVAM_BASE_URL = "https://api.sarvam.ai"
@@ -26,6 +27,9 @@ TIMEOUT_SECONDS = 10.0
 POLL_INTERVAL_SECONDS = 0.25
 TERMINAL_JOB_STATUSES = {"completed", "partially_completed", "failed", "rejected"}
 ALLOWED_MEDIA_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+
+# Local development convenience only; deployed environments retain precedence.
+load_dotenv()
 
 
 class ProviderSmokeError(RuntimeError):
@@ -149,7 +153,7 @@ def run_sarvam_smoke(image_path: Path, *, client: httpx.Client, now: Callable[[]
                 f"{base_url}/doc-ai/v1/job/parse",
                 headers=headers,
                 files={"file": (image_path.name, image_file, media_type)},
-                data={"language": "en-IN", "output_format": "md", "content_type": "printed"},
+                data={"language": "en-IN", "content_type": "printed"},
                 timeout=max(0.1, deadline - now()),
             )
         _raise_for_status(response, "Sarvam")
@@ -168,10 +172,15 @@ def run_sarvam_smoke(image_path: Path, *, client: httpx.Client, now: Callable[[]
             raise ProviderSmokeError(f"Sarvam job did not complete successfully ({job_status or 'timeout'}).")
         download = client.get(f"{base_url}/doc-ai/v1/job/{job_id}/download-url", headers=headers, timeout=max(0.1, deadline - now()))
         _raise_for_status(download, "Sarvam")
-        download_url = download.json().get("url")
+        download_payload = download.json()
+        download_url = download_payload.get("url")
         if not isinstance(download_url, str) or not download_url.startswith("https://"):
             raise ProviderSmokeError("Sarvam download response did not contain a valid HTTPS URL.")
-        artifact = client.get(download_url, timeout=max(0.1, deadline - now()))
+        download_method = download_payload.get("method")
+        if not isinstance(download_method, str) or not download_method:
+            raise ProviderSmokeError("Sarvam download response did not contain a request method.")
+        download_headers = download_payload.get("headers")
+        artifact = client.request(download_method, download_url, headers=download_headers if isinstance(download_headers, dict) else None, timeout=max(0.1, deadline - now()))
         _raise_for_status(artifact, "Sarvam artifact")
         text = _read_zip_markdown(artifact.content)
         return normalize_text("sarvam", text, round((now() - started) * 1000))
