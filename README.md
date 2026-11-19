@@ -17,6 +17,11 @@ On macOS/Linux use `.venv/bin/python` in place of `.\.venv\Scripts\python`.
 Open http://127.0.0.1:8000/chat/ and http://127.0.0.1:8000/dashboard/.
 API docs: http://127.0.0.1:8000/docs. No Node build step is required.
 
+For two-reader screenshot extraction, set `SARVAM_API_KEY` and `GROQ_API_KEY`
+in your local environment or an uncommitted `.env` file. Without both readers,
+uploads stay in the review queue. A reader agreement score measures matching
+visible fields; it is not a calibrated probability.
+
 Both pages call the backend directly. Set `CHITMIRROR_API_BASE` when starting
 the frontend server to select the backend URL (empty means same origin).
 The shared API contract and examples are in `contracts/`. A separate canned
