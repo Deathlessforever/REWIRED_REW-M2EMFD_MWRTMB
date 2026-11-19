@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict
 
 from backend.database import connect
+from backend.messages import handle_message
 from backend.reminders import send_reminders
 from backend.state import get_state
 
@@ -57,6 +58,12 @@ class ReminderRequest(BaseModel):
     actor: str
 
 
+class MessageRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    sender: str
+    text: str
+
+
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, exc: RequestValidationError):
     return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Invalid request."}})
@@ -65,6 +72,21 @@ async def invalid_request(request: Request, exc: RequestValidationError):
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/message")
+def message(payload: MessageRequest):
+    sender, text = payload.sender.strip(), payload.text.strip()
+    if not sender or not text:
+        return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Sender and message are required."}})
+    db, _ = connect(database_path())
+    try:
+        try:
+            return handle_message(db, sender=sender, text=text)
+        except ValueError as exc:
+            return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": str(exc)}})
+    finally:
+        db.close()
 
 
 @app.post("/reminders/send")

@@ -15,6 +15,10 @@ CONTRACTS = ROOT / "contracts"
 SCHEMA = json.loads((CONTRACTS / "schemas.json").read_text(encoding="utf-8"))
 STATE = json.loads((FIXTURES / "state_foreman.json").read_text(encoding="utf-8"))
 RESULTS = json.loads((FIXTURES / "result_examples.json").read_text(encoding="utf-8"))
+CHAT_REPLIES = {
+    name: json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+    for name in ("chat_dues_reply.json", "chat_statement_reply.json", "chat_reminder_reply.json")
+}
 
 
 def validator_for(name: str) -> Draft202012Validator:
@@ -34,6 +38,8 @@ def test_contract_json_fixtures_validate_against_t01_schemas():
         assert instances
         for instance in instances:
             validator_for(schema_name).validate(instance)
+    for fixture in CHAT_REPLIES.values():
+        validator_for("message_response").validate(fixture)
 
 
 def test_result_examples_cover_every_t01_bubble_and_result_status():
