@@ -2,6 +2,7 @@ const helpers = window.ChitMirrorState;
 const connection = document.querySelector("#connection");
 const connectionLabel = document.querySelector("#connection-label");
 const demoLoadButton = document.querySelector("#load-demo");
+const sendRemindersButton = document.querySelector("#send-reminders");
 
 function setConnection(isConnected, message) {
   if (!connection || !connectionLabel) return;
@@ -356,6 +357,27 @@ async function loadDemo() {
   }
 }
 
+async function sendRemindersNow() {
+  if (currentRole !== "foreman" || !sendRemindersButton || sendRemindersButton.disabled) return;
+  sendRemindersButton.disabled = true;
+  text(elements.stateStatus, "Sending private reminders…");
+  try {
+    const response = await fetch(apiBase() + "/reminders/send", {
+      method: "POST", headers: {"Accept":"application/json","Content-Type":"application/json"},
+      body: JSON.stringify({actor:"foreman"})
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error?.message || "Reminder request failed.");
+    text(elements.stateStatus, "Reminders recorded for " + payload.sent + " member(s).");
+    await refresh();
+  } catch (error) {
+    text(elements.stateStatus, error.message || "Could not send reminders.");
+  } finally {
+    sendRemindersButton.disabled = false;
+  }
+}
+
+sendRemindersButton?.addEventListener("click", sendRemindersNow);
 document.querySelector("#ledger-refresh")?.addEventListener("click", refresh);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refresh();
