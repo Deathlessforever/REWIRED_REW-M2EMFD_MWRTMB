@@ -1,4 +1,4 @@
-"""Sarvam-only screenshot reading; extraction is never payment verification."""
+"""Two-reader screenshot extraction; claims are never proof of payment."""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ class ScreenshotReaderQueue:
     """Small bounded worker boundary for multiple local uploads; no external queue exists."""
 
     def __init__(self, workers: int = 2) -> None:
-        self._executor = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="sarvam-reader")
+        self._executor = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="payment-reader")
 
     def submit(self, image_path: Path, client: httpx.Client) -> Future[ScreenshotClaim]:
         return self._executor.submit(read_screenshot, image_path, client)
@@ -76,7 +76,7 @@ def read_uploaded_screenshot(filename: str, content: bytes, client: httpx.Client
     suffix = Path(filename).suffix.lower()
     if suffix not in {".png", ".jpg", ".jpeg"}:
         raise ProviderSmokeError("Only PNG and JPG/JPEG screenshots are supported.")
-    with tempfile.TemporaryDirectory(prefix="chitmirror-sarvam-") as directory:
+    with tempfile.TemporaryDirectory(prefix="chitmirror-reader-") as directory:
         image_path = Path(directory) / f"screenshot{suffix}"
         image_path.write_bytes(content)
         return read_screenshot(image_path, client)
