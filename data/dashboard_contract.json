@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chitmirror.local/contracts/dashboard.json",
+  "title": "ChitMirror dashboard demo evidence",
+  "type": "object",
+  "required": ["group", "initialVerifiedUtrs", "overdueMemberIds", "initialAudit"],
+  "properties": {
+    "group": {
+      "type": "object",
+      "required": ["name", "chitValue", "memberCount", "tenureMonths", "currentMonth", "baseInstalment", "foremanCommission", "exampleDiscount", "netInstalment", "prizeAmount", "dividend"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "chitValue": {"type": "integer", "minimum": 1},
+        "memberCount": {"type": "integer", "minimum": 1},
+        "tenureMonths": {"type": "integer", "minimum": 1},
+        "currentMonth": {"type": "integer", "minimum": 1},
+        "baseInstalment": {"type": "integer", "minimum": 0},
+        "foremanCommission": {"type": "integer", "minimum": 0},
+        "exampleDiscount": {"type": "integer", "minimum": 0},
+        "netInstalment": {"type": "integer", "minimum": 0},
+        "prizeAmount": {"type": "integer", "minimum": 0},
+        "dividend": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "initialVerifiedUtrs": {"type": "array", "items": {"type": "string", "pattern": "^\\d{12}$"}, "uniqueItems": true},
+    "overdueMemberIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "initialAudit": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["utr", "amount", "memberId", "status", "reason", "time"],
+        "properties": {
+          "utr": {"type": "string"},
+          "amount": {"type": "integer", "minimum": 0},
+          "memberId": {"type": "string"},
+          "status": {"enum": ["verified", "review", "pending", "failed", "mismatch", "duplicate"]},
+          "reason": {"type": "string"},
+          "time": {"type": "string", "format": "date-time"},
+          "fileName": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
+
