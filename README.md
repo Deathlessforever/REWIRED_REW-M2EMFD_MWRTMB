@@ -179,3 +179,8 @@ python scripts/run_demo_scenarios.py
 ```
 
 The loader seeds synthetic members, payment claims, independent bank evidence, and audit events. It never clears existing records; loading requires an empty demo database and subsequent loads are safe no-ops. The foreman dashboard also has a **Load demo** button. No real bank transfer is made.
+
+
+## End-to-end chat demo
+
+Run the backend, load the synthetic demo from the foreman dashboard, then open `/chat/`. Choose a member, paste or attach a PNG/JPG/WebP screenshot, or send `dues`, `statement`, or `reminders`. Screenshot extraction is a claim; only a claim that passes the independent evidence checks can post to the ledger. If a reader key is unavailable, the upload remains in the review queue. Uploads are limited to 10 MB.
