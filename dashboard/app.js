@@ -1,6 +1,7 @@
 const helpers = window.ChitMirrorState;
 const connection = document.querySelector("#connection");
 const connectionLabel = document.querySelector("#connection-label");
+const demoLoadButton = document.querySelector("#load-demo");
 
 function setConnection(isConnected, message) {
   if (!connection || !connectionLabel) return;
@@ -311,6 +312,7 @@ function applyRole(role) {
     panel.hidden = panel.dataset.rolePanel !== currentRole;
   });
   if (elements.memberSelectWrap) elements.memberSelectWrap.hidden = currentRole !== "member";
+  if (demoLoadButton) demoLoadButton.hidden = currentRole !== "foreman";
   if (lastState) renderAll(lastState, lastSource);
   refresh();
 }
@@ -324,11 +326,36 @@ function stop() {
 document.querySelectorAll("[data-role]").forEach(button => {
   button.addEventListener("click", () => applyRole(button.dataset.role));
 });
+if (demoLoadButton) demoLoadButton.addEventListener("click", loadDemo);
 elements.memberSelect?.addEventListener("change", event => {
   currentMemberId = event.target.value;
   if (lastState) renderAll(lastState, lastSource);
   refresh();
 });
+async function loadDemo() {
+  if (currentRole !== "foreman" || !demoLoadButton || demoLoadButton.disabled) return;
+  demoLoadButton.disabled = true;
+  text(elements.stateStatus, "Loading synthetic four-month demo…");
+  try {
+    const response = await fetch(apiBase() + "/demo/load", {
+      method: "POST",
+      headers: {"Accept": "application/json", "Content-Type": "application/json"},
+      body: JSON.stringify({actor: "foreman"})
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error && payload.error.message ? payload.error.message : "Demo load failed (" + response.status + ").");
+    }
+    if (!payload || payload.loaded !== true) throw new Error("The server did not confirm the demo load.");
+    await refresh();
+    text(elements.stateStatus, "Demo loaded. Four-month synthetic ledger is ready.");
+  } catch (error) {
+    text(elements.stateStatus, error.message || "Could not load the demo data.");
+  } finally {
+    demoLoadButton.disabled = false;
+  }
+}
+
 document.querySelector("#ledger-refresh")?.addEventListener("click", refresh);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refresh();
