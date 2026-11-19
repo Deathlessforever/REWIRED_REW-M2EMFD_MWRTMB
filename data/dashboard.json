@@ -1,0 +1,28 @@
+{
+  "group": {
+    "name": "Saanvi Circle",
+    "chitValue": 100000,
+    "memberCount": 20,
+    "tenureMonths": 20,
+    "currentMonth": 1,
+    "baseInstalment": 5000,
+    "foremanCommission": 5000,
+    "exampleDiscount": 15000,
+    "netInstalment": 4500,
+    "prizeAmount": 85000,
+    "dividend": 500
+  },
+  "initialVerifiedUtrs": [
+    "123456784821", "123456787710", "123456789934", "123456780112", "123456780749",
+    "123456781203", "123456782618", "123456783509", "123456785644", "123456786318",
+    "123456788427", "123456789086", "123456780395"
+  ],
+  "overdueMemberIds": ["M-19", "M-20"],
+  "initialAudit": [
+    {"utr":"123456784821","amount":4500,"memberId":"M-01","status":"verified","reason":"Transaction evidence matched and was recorded.","time":"2024-12-05T12:42:00+05:30","fileName":"ravi-payment.svg"},
+    {"utr":"123456781234","amount":4500,"memberId":"M-14","status":"review","reason":"Screenshot received; foreman review is pending.","time":"2024-12-05T12:25:00+05:30","fileName":"sita-payment.svg"},
+    {"utr":"999900009999","amount":4500,"memberId":"M-17","status":"failed","reason":"No matching transaction exists in independent evidence.","time":"2024-12-05T12:10:00+05:30","fileName":"arun-payment.svg"},
+    {"utr":"123456785678","amount":4500,"memberId":"M-18","status":"pending","reason":"Submitted and awaiting verification.","time":"2024-12-05T11:55:00+05:30","fileName":"meena-payment.svg"}
+  ]
+}
+

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "note": "Synthetic demo metadata only. Screenshot uploads are previewed in-browser; no real payment screenshots or personal data are included.",
+  "screenshots": [
+    {"id":"ravi-payment","file":null,"memberId":"M-01","utr":"123456784821","amount":4500,"expectedStatus":"verified"},
+    {"id":"sita-payment","file":null,"memberId":"M-14","utr":"123456781234","amount":4500,"expectedStatus":"verified"},
+    {"id":"arun-payment","file":null,"memberId":"M-17","utr":"999900009999","amount":4500,"expectedStatus":"failed"},
+    {"id":"meena-payment","file":null,"memberId":"M-18","utr":"123456785678","amount":4500,"expectedStatus":"pending"}
+  ]
+}
+
