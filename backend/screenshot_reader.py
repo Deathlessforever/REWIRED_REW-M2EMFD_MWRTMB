@@ -9,7 +9,7 @@ from pathlib import Path
 
 import httpx
 
-from backend.provider_smoke import ExtractionClaim, ProviderSmokeError, run_groq_smoke, run_sarvam_smoke
+from backend.provider_smoke import ExtractionClaim, ProviderSmokeError, run_claude_smoke, run_sarvam_smoke
 
 
 @dataclass(frozen=True)
@@ -62,10 +62,10 @@ class ScreenshotReaderQueue:
 
 
 def read_screenshot(image_path: Path, client: httpx.Client) -> ScreenshotClaim:
-    """Read with Sarvam and Groq; any missing or disagreeing second read stays review-only."""
+    """Read with Sarvam and Claude; any missing or disagreeing second read stays review-only."""
     first = run_sarvam_smoke(image_path, client=client)
     try:
-        second = run_groq_smoke(image_path, client=client)
+        second = run_claude_smoke(image_path, client=client)
     except ProviderSmokeError:
         return ScreenshotClaim.from_extraction(first)
     return ScreenshotClaim.from_two_readers(first, second)
