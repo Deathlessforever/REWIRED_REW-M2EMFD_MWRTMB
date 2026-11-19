@@ -30,7 +30,14 @@ def get_state(db, *, role, member_id=None):
                     status = "verified"
                 elif payment_status == "needs_review":
                     status = "needs_review"
-                    flags.append({"item_id": item, "member_id": member_key, "month": month, "reason": "Payment requires review"})
+                    reason_row = db.execute(
+                        "SELECT reason FROM audit_log WHERE entity_id = ? ORDER BY id DESC LIMIT 1",
+                        (item,),
+                    ).fetchone()
+                    flags.append({
+                        "item_id": item, "member_id": member_key, "month": month,
+                        "reason": reason_row[0] if reason_row else "Payment requires review",
+                    })
                 elif payment_status == "manual_approved":
                     status = "manual_approved"
                 elif payment_status == "rejected":
