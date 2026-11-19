@@ -52,7 +52,9 @@ def test_demo_load_endpoint_seeds_four_months_and_is_idempotent(tmp_path, monkey
             "evidence": db.execute("SELECT COUNT(*) FROM bank_evidence").fetchone()[0],
             "audit": db.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0],
         }
-        assert before == {"members": 20, "payments": 77, "posted": 73, "evidence": 73, "audit": before["audit"]}
+        assert {key: before[key] for key in ("members", "payments", "posted", "evidence")} == {
+            "members": 20, "payments": 77, "posted": 73, "evidence": 73
+        }
         assert before["audit"] > 73
     finally:
         db.close()
