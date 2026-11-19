@@ -1,0 +1,10 @@
+{
+  "scenarios": {
+    "genuine": {"utr":"123456781234","amount":"4500","date":"2024-12-05","receiver":"Saanvi Circle","member":"M-14"},
+    "duplicate": {"utr":"123456784821","amount":"4500","date":"2024-12-05","receiver":"Saanvi Circle","member":"M-16"},
+    "fake": {"utr":"999900009999","amount":"4500","date":"2024-12-05","receiver":"Saanvi Circle","member":"M-17"},
+    "amount": {"utr":"123456782345","amount":"5000","date":"2024-12-05","receiver":"Saanvi Circle","member":"M-15"},
+    "receiver": {"utr":"123456783456","amount":"4500","date":"2024-12-05","receiver":"Different Payee","member":"M-16"}
+  }
+}
+
