@@ -205,7 +205,7 @@ async def message(request: Request):
         elif report.by_name("expected_amount").code == "wrong_amount" or report.by_name("bank_evidence").code == "bank_amount_conflict":
             status = "wrong_amount"
             reason = "Amount does not match the instalment and independent bank evidence."
-        elif report.passed and claim.confidence is not None and claim.confidence >= 0.85:
+        elif report.passed and claim.readers_agree is True and claim.confidence is not None and claim.confidence >= 0.85:
             status = "verified"
             reason = "Claim matched independent bank evidence and passed all configured checks."
         else:
