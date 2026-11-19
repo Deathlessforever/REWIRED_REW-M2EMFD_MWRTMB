@@ -48,7 +48,7 @@ def test_sarvam_submits_polls_downloads_and_extracts(monkeypatch: pytest.MonkeyP
         if request.url.path.endswith("/status"):
             return httpx.Response(200, json={"status": "pending" if len([r for r in requests if r.url.path.endswith('/status')]) == 1 else "completed"})
         if request.url.path.endswith("/download-url"):
-            return httpx.Response(200, json={"url": "https://download.synthetic/result.zip"})
+            return httpx.Response(200, json={"method": "GET", "url": "https://download.synthetic/result.zip", "headers": {}})
         if request.url.host == "download.synthetic":
             return httpx.Response(200, content=output_zip("PhonePe completed ₹4,450.07 UTR 123456789012 to demo.chit@upi"))
         raise AssertionError(request.url)
@@ -82,11 +82,20 @@ def test_sarvam_handles_rate_limits_failed_jobs_timeouts_and_bad_zip(monkeypatch
         if request.url.path.endswith("/status"):
             return httpx.Response(200, json={"status": "completed"})
         if request.url.path.endswith("/download-url"):
-            return httpx.Response(200, json={"url": "https://download.synthetic/bad.zip"})
+            return httpx.Response(200, json={"method": "GET", "url": "https://download.synthetic/bad.zip", "headers": {}})
         return httpx.Response(200, content=b"not a zip")
 
     with pytest.raises(ProviderSmokeError, match="valid ZIP"):
         run_sarvam_smoke(image, client=client_for(corrupt_download), now=lambda: 0)
+
+
+def test_sarvam_handles_network_timeouts_and_malformed_provider_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    monkeypatch.setenv("SARVAM_API_KEY", "test-only")
+    image = write_image(tmp_path)
+    with pytest.raises(ProviderSmokeError, match="timed out"):
+        run_sarvam_smoke(image, client=client_for(lambda _: (_ for _ in ()).throw(httpx.ReadTimeout("slow"))))
+    with pytest.raises(ProviderSmokeError, match="malformed response"):
+        run_sarvam_smoke(image, client=client_for(lambda _: httpx.Response(201, content=b"{")))
 
 
 def test_groq_sends_png_and_extracts_structured_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
