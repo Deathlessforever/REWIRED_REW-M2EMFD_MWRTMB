@@ -28,6 +28,7 @@ from backend.provider_smoke import ProviderSmokeError
 from backend.payment_checks import ExtractedPaymentClaim, InMemoryImageHashRegistry, load_bank_evidence, validate_payment_claim
 from backend.messages import handle_message
 from backend.ledger import post_verified_payment
+from backend.review import review_payment
 
 ROOT = Path(__file__).resolve().parent.parent
 _IMAGE_HASH_REGISTRY = InMemoryImageHashRegistry()
@@ -71,6 +72,14 @@ class ReminderRequest(BaseModel):
     actor: str
 
 
+class ReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    actor: str
+    item_id: str
+    decision: str
+    reason: str
+
+
 class DemoLoadRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     actor: str
@@ -99,6 +108,21 @@ def reminders_send(payload: ReminderRequest):
     db, context = connect(database_path())
     try:
         return {"sent": send_reminders(db, context, actor=payload.actor, send_now=True)}
+    finally:
+        db.close()
+
+
+@app.post("/review")
+def review(payload: ReviewRequest):
+    db, context = connect(database_path())
+    try:
+        try:
+            return review_payment(
+                db, context, item_id=payload.item_id, decision=payload.decision,
+                actor=payload.actor, reason=payload.reason,
+            )
+        except ValueError as exc:
+            return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": str(exc)}})
     finally:
         db.close()
 
