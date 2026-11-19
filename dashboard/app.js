@@ -1,14 +1,18 @@
+const connection = document.querySelector("#connection");
+const connectionLabel = document.querySelector("#connection-label");
+
 async function checkConnection() {
-  const status = document.querySelector("#connection");
+  const base = window.CHITMIRROR_API_BASE || "";
   try {
-    const response = await fetch(`${window.CHITMIRROR_API_BASE}/health`);
-    if (!response.ok || (await response.json()).status !== "ok") {
-      throw new Error("Health check failed");
-    }
-    status.textContent = "Backend connected";
+    const response = await fetch(`${base}/health`, { headers: { Accept: "application/json" } });
+    if (!response.ok || (await response.json()).status !== "ok") throw new Error("Backend health check failed");
+    connection.classList.add("connected");
+    connectionLabel.textContent = "Backend connected";
   } catch {
-    status.textContent = "Backend unavailable — check the server and API URL.";
+    connection.classList.add("failed");
+    connectionLabel.textContent = "Backend unavailable · showing sample dashboard";
   }
 }
 
 checkConnection();
+
