@@ -1,6 +1,8 @@
 import copy
 import json
 import re
+from email import policy
+from email.parser import BytesParser
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -10,6 +12,12 @@ from playwright.sync_api import expect
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "data" / "fixtures"
 STATE_FIXTURE = FIXTURES / "state_foreman.json"
+
+
+def submitted_form(request):
+    headers = ("Content-Type: " + request.headers["content-type"] + "\r\nMIME-Version: 1.0\r\n\r\n").encode()
+    message = BytesParser(policy=policy.default).parsebytes(headers + request.post_data_buffer)
+    return {part.get_param("name", header="content-disposition"): part.get_content() for part in message.iter_parts()}
 
 
 def load_fixture(name):
@@ -44,7 +52,7 @@ def test_smoke_statement_fixture_renders(page, base_url):
     reply = load_fixture("chat_statement_reply.json")
 
     def serve_message(route):
-        sent.append(route.request.post_data_json)
+        sent.append(submitted_form(route.request))
         fulfill(reply)(route)
 
     route_chat(page, serve_message)
@@ -120,7 +128,7 @@ def test_empty_and_error_states_are_visible(page, base_url):
     calls = []
 
     def serve_message(route):
-        calls.append(route.request.post_data_json)
+        calls.append(submitted_form(route.request))
         if len(calls) == 1:
             fulfill({"bubbles": []})(route)
         else:

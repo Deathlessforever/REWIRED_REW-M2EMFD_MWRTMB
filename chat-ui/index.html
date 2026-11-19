@@ -6,7 +6,9 @@
   <meta name="theme-color" content="#1f3a5f">
   <title>ChitMirror Chat</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./shell.css">
   <script src="/config.js" defer></script>
+  <script src="./api.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
@@ -47,7 +49,7 @@
         <textarea id="message-input" rows="3" placeholder="Try: dues, statement, reminders, Month 3, Name: Ravi" required></textarea>
         <p class="hint-label">Command hints · suggestions only</p>
         <output id="command-hints" class="command-hints" data-testid="command-hints" aria-live="polite" hidden></output>
-        <div class="composer-footer"><span>Server checks commands and selects private replies</span><button id="send-message" type="submit">Send message <span aria-hidden="true">→</span></button></div>
+        <div class="composer-footer"><span>Server checks commands and selects private replies · Ctrl+Enter to send</span><div class="send-controls"><span id="send-status" class="send-status" role="status" aria-live="polite" hidden></span><button id="send-message" type="submit">Send message <span aria-hidden="true">→</span></button></div></div>
       </form>
       <p id="notice" class="notice" aria-live="polite"></p>
     </section>
