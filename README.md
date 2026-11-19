@@ -19,9 +19,30 @@ API docs: http://127.0.0.1:8000/docs. No Node build step is required.
 
 Both pages call the backend directly. Each owns its `config.js`; set
 `window.CHITMIRROR_API_BASE` to switch its backend URL (empty means same origin).
-The backend exposes `/health`, `/state`, and `/reminders/send`; other business
-endpoints remain separate work. The shared API contract is in `contracts/`.
-Separate origins require backend CORS configuration.
+The backend exposes `/health`, `/state`, `/reminders/send`, and
+`/demo/load`. The message and review routes are still separate work. The shared
+API contract is in `contracts/`. Separate origins require backend CORS configuration.
+
+### Load the four-month synthetic demo
+
+Use a fresh SQLite path; the loader never clears existing records, and repeating
+the request is a no-op. It seeds the four-month, 20-member fixture and its
+independent bank evidence. The scenario runner checks the genuine, reused UTR,
+fake UTR, wrong amount, and late-payment cases against `data/bank.csv`.
+Everything is synthetic, and no payment is sent.
+
+```powershell
+$env:CHITMIRROR_DATABASE = Join-Path (Get-Location) "data/chitmirror-demo.db"
+python -m uvicorn backend.main:app --reload
+```
+
+In another terminal:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/demo/load -ContentType "application/json" -Body '{"actor":"foreman"}'
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/state?role=foreman"
+python scripts/run_demo_scenarios.py
+```
 
 The backend stores private demo reminder bubbles in SQLite (`data/chitmirror.db`
 by default; set `CHITMIRROR_DATABASE` to override). While the server is running,
