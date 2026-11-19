@@ -1,7 +1,6 @@
 # ChitMirror
 
-Screenshot in, verified ledger out. A four-person, six-hour hackathon project.
-A payment screenshot is a claim; bank CSV evidence is required for verification.
+Screenshot in, verified ledger out. A four-person, six-hour hackathon project. A screenshot is a payment claim; local transaction evidence is required before the demo ledger records it.
 
 ## Run locally
 
@@ -13,14 +12,13 @@ python -m venv .venv
 .\.venv\Scripts\python -m uvicorn backend.main:app --reload
 ```
 
-On macOS/Linux use `.venv/bin/python` in place of `.\.venv\Scripts\python`.
-Open http://127.0.0.1:8000/chat/ and http://127.0.0.1:8000/dashboard/.
-API docs: http://127.0.0.1:8000/docs. No Node build step is required.
+On macOS/Linux use `.venv/bin/python` in place of `.\.venv\Scripts\python`. Open http://127.0.0.1:8000/dashboard/ for the foreman demo and http://127.0.0.1:8000/chat/ for the chat page. No Node build step or internet connection is needed after installing dependencies.
 
-Both pages call the backend directly. Each owns its `config.js`; set
-`window.CHITMIRROR_API_BASE` to switch its backend URL (empty means same origin).
-The backend currently exposes only `/health`; business API shapes and stubs
-remain T01 and T03 work. Separate origins require backend CORS configuration.
+The dashboard includes the monthly overview, payment verification queue, shared ledger, auction calculator, members, member view, statement CSV export, reports, audit history and group setup. Screenshots are previewed in the browser. OCR is not included; the member or foreman can correct the extracted fields manually before submitting them.
+
+The local API exposes `/api/state`, `/api/verify` and `/api/reset`. `/data/` serves the synthetic dashboard and evidence fixtures. The verification endpoint checks the 12-digit UTR, amount, date, receiver and member against `data/bank.csv`. It adds only matched payments to the in-memory demo ledger. The initial ledger and audit are restored on reset or server restart.
+
+**Demo boundary:** `data/bank.csv` is synthetic and is not a live bank feed or financial evidence. Auction values are illustrative. The demo does not initiate payouts or provide authentication.
 
 ## Team folders
 
@@ -29,13 +27,11 @@ remain T01 and T03 work. Separate origins require backend CORS configuration.
 | A | Reader and verification modules under `backend/`; tests under `tests/` |
 | B | `backend/`: contract, services, storage, API and engine integration |
 | C | `chat-ui/`: independent chat page; demo script and pitch |
-| D | `dashboard/` and `data/`: independent dashboard, fixtures and scenario |
+| D | `dashboard/` and `data/`: dashboard, fixtures and demo verification flow |
 
-The existing `chit_engine.py` and `chitmirror_final.mermaid` were not present in
-the empty repository. Their owner should supply the originals; do not recreate
-the completed engine or diagram. Integration belongs to T09.
+The existing `chit_engine.py` and `chitmirror_final.mermaid` were not present in the empty repository. Their owner should supply the originals; do not recreate the completed engine or diagram. Integration belongs to T09.
 
-## Tests
+## Checks
 
 ```powershell
 .\.venv\Scripts\python -m pytest tests/test_app.py
@@ -48,17 +44,5 @@ With the development server running, in a second terminal:
 .\.venv\Scripts\python -m pytest tests/ui --base-url http://127.0.0.1:8000
 ```
 
-CI runs backend checks and Chromium smoke tests. Manual checklist for UI PRs:
-open both pages, confirm backend connection, inspect a phone-width chat and
-projector-width dashboard, and confirm a stopped backend produces a readable error.
+No external bank, OCR, or payment service is called by this demo.
 
-## Working agreement
-
-One issue and branch per person (`T##-short-name`), maximum four issues in flight.
-PRs reference `Closes #<issue>` and get a teammate review; keep main green.
-Merge dependencies first unless the issue permits fixtures/stubs. Freeze at
-hour 4:30; then only bug fixes. Follow the issue plan for business features.
-
-Copy `.env.example` to `.env` when needed. Keys are blank and no provider calls
-are made by this scaffold. Future services must load their environment explicitly;
-the current app does not read `.env`.
