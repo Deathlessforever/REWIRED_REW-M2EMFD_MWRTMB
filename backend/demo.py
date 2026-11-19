@@ -68,7 +68,7 @@ def _evaluate_claim(claim: dict, evidence_by_utr: dict[str, dict[str, str]],
     reason = "Matched independent bank evidence."
     ledger = {"recorded": True, "timing": "on_time"}
     if late:
-        reason = f"Matched independent bank evidence; transaction arrived after the {due_date.isoformat()} due date."
+        reason = f"Matched bank evidence; transaction arrived after the {due_date.isoformat()} due date."
         ledger = {"recorded": True, "status": "overdue", "timing": "late", "late_fee_paise": None}
     return {
         "bubble": {"type": "result_card", "status": "verified", "amount_paise": evidence_amount,
