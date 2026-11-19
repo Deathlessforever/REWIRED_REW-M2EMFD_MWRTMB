@@ -1,5 +1,11 @@
 """Run and report the five planted synthetic payment scenarios."""
 
+import sys
+from pathlib import Path
+
+# Running this file directly puts scripts/ rather than the repository root on sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from backend.demo import run_planted_scenarios
 
 
