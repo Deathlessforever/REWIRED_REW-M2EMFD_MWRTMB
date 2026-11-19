@@ -54,6 +54,19 @@ CREATE TABLE IF NOT EXISTS reminders (
     text TEXT NOT NULL,
     UNIQUE(member_id, month, phase, send_date)
 );
+CREATE TABLE IF NOT EXISTS bank_evidence (
+    evidence_id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL,
+    utr TEXT NOT NULL UNIQUE CHECK(length(utr) = 12 AND utr NOT GLOB '*[^0-9]*'),
+    amount_paise INTEGER NOT NULL CHECK(amount_paise >= 0),
+    credited_at TEXT NOT NULL,
+    payer_reference TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS demo_loads (
+    seed_id TEXT PRIMARY KEY,
+    fixture_version INTEGER NOT NULL,
+    loaded_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     actor TEXT NOT NULL CHECK(length(trim(actor)) > 0),
@@ -108,6 +121,20 @@ CREATE TRIGGER IF NOT EXISTS reminder_no_replace BEFORE INSERT ON reminders
 WHEN EXISTS (SELECT 1 FROM reminders WHERE id = NEW.id OR
              (member_id = NEW.member_id AND month = NEW.month AND phase = NEW.phase AND send_date = NEW.send_date))
 BEGIN SELECT RAISE(ABORT, 'reminders are append-only'); END;
+CREATE TRIGGER IF NOT EXISTS bank_evidence_no_update BEFORE UPDATE ON bank_evidence
+BEGIN SELECT RAISE(ABORT, 'bank evidence is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS bank_evidence_no_delete BEFORE DELETE ON bank_evidence
+BEGIN SELECT RAISE(ABORT, 'bank evidence is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS bank_evidence_no_replace BEFORE INSERT ON bank_evidence
+WHEN EXISTS (SELECT 1 FROM bank_evidence WHERE evidence_id = NEW.evidence_id OR utr = NEW.utr)
+BEGIN SELECT RAISE(ABORT, 'bank evidence is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS demo_load_no_update BEFORE UPDATE ON demo_loads
+BEGIN SELECT RAISE(ABORT, 'demo load marker is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS demo_load_no_delete BEFORE DELETE ON demo_loads
+BEGIN SELECT RAISE(ABORT, 'demo load marker is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS demo_load_no_replace BEFORE INSERT ON demo_loads
+WHEN EXISTS (SELECT 1 FROM demo_loads WHERE seed_id = NEW.seed_id)
+BEGIN SELECT RAISE(ABORT, 'demo load marker is immutable'); END;
 """
 
 
@@ -121,7 +148,7 @@ def connect(path):
     db.create_function("audit_actor", 0, lambda: context["actor"])
     db.create_function("audit_reason", 0, lambda: context["reason"])
     db.executescript(SCHEMA)
-    for table, key in (("members", "id"), ("months", "month"), ("payments", "id"), ("ledger_entries", "id"), ("settlements", "month"), ("settlement_dues", "member_id"), ("reminders", "id")):
+    for table, key in (("members", "id"), ("months", "month"), ("payments", "id"), ("ledger_entries", "id"), ("settlements", "month"), ("settlement_dues", "member_id"), ("reminders", "id"), ("bank_evidence", "evidence_id"), ("demo_loads", "seed_id")):
         for operation in ("INSERT", "UPDATE", "DELETE"):
             row = "OLD" if operation == "DELETE" else "NEW"
             db.execute(f"""
