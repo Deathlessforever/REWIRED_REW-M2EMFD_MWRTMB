@@ -1,0 +1,28 @@
+%% Replacement architecture based on the hackathon brief; the original file was unavailable.
+%% Target architecture: some API routes and integrations are still under development.
+flowchart LR
+    subgraph client ["Independent frontends"]
+        chat["Phone-style chat"]
+        dashboard["Projector dashboard"]
+    end
+    subgraph gateway ["Backend API"]
+        api["Shared backend routes"]
+    end
+    subgraph service ["Backend services"]
+        core["Verification, settlement, review and reminders"]
+    end
+    subgraph datastore ["Demo data"]
+        sqlite["Ledger and audit log"]
+        bankCsv["Bank statement CSV"]
+    end
+    subgraph external ["Reading providers"]
+        sarvam["Sarvam"]
+        groq["Groq"]
+    end
+    chat -->|"Messages and reviews"| api
+    dashboard -->|"State and reminders"| api
+    api -->|"Routes requests"| core
+    core -->|"Reads and writes"| sqlite
+    core -->|"Checks bank evidence"| bankCsv
+    core -.->|"Sarvam: reads screenshot"| sarvam
+    core -.->|"Groq: cross-checks screenshot"| groq

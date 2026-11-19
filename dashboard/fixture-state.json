@@ -1,0 +1,803 @@
+{
+  "members": [
+    {
+      "id": "member-01",
+      "name": "Member 01"
+    },
+    {
+      "id": "member-02",
+      "name": "Member 02"
+    },
+    {
+      "id": "member-03",
+      "name": "Member 03"
+    },
+    {
+      "id": "member-04",
+      "name": "Member 04"
+    },
+    {
+      "id": "member-05",
+      "name": "Member 05"
+    },
+    {
+      "id": "member-06",
+      "name": "Member 06"
+    },
+    {
+      "id": "member-07",
+      "name": "Member 07"
+    },
+    {
+      "id": "member-08",
+      "name": "Member 08"
+    },
+    {
+      "id": "member-09",
+      "name": "Member 09"
+    },
+    {
+      "id": "member-10",
+      "name": "Member 10"
+    },
+    {
+      "id": "member-11",
+      "name": "Member 11"
+    },
+    {
+      "id": "member-12",
+      "name": "Member 12"
+    },
+    {
+      "id": "member-13",
+      "name": "Member 13"
+    },
+    {
+      "id": "member-14",
+      "name": "Member 14"
+    },
+    {
+      "id": "member-15",
+      "name": "Member 15"
+    },
+    {
+      "id": "member-16",
+      "name": "Member 16"
+    },
+    {
+      "id": "member-17",
+      "name": "Member 17"
+    },
+    {
+      "id": "member-18",
+      "name": "Member 18"
+    },
+    {
+      "id": "member-19",
+      "name": "Member 19"
+    },
+    {
+      "id": "member-20",
+      "name": "Member 20"
+    }
+  ],
+  "months": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "ledger": [
+    {
+      "member_id": "member-01",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000001"
+    },
+    {
+      "member_id": "member-02",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000002"
+    },
+    {
+      "member_id": "member-03",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000003"
+    },
+    {
+      "member_id": "member-04",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000004"
+    },
+    {
+      "member_id": "member-05",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000005"
+    },
+    {
+      "member_id": "member-06",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000006"
+    },
+    {
+      "member_id": "member-07",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000007"
+    },
+    {
+      "member_id": "member-08",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000008"
+    },
+    {
+      "member_id": "member-09",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000009"
+    },
+    {
+      "member_id": "member-10",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000010"
+    },
+    {
+      "member_id": "member-11",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000011"
+    },
+    {
+      "member_id": "member-12",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000012"
+    },
+    {
+      "member_id": "member-13",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000013"
+    },
+    {
+      "member_id": "member-14",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000014"
+    },
+    {
+      "member_id": "member-15",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000015"
+    },
+    {
+      "member_id": "member-16",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000016"
+    },
+    {
+      "member_id": "member-17",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000017"
+    },
+    {
+      "member_id": "member-18",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000018"
+    },
+    {
+      "member_id": "member-19",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000019"
+    },
+    {
+      "member_id": "member-20",
+      "month": 1,
+      "status": "verified",
+      "amount_paise": 465000,
+      "utr": "010000000020"
+    },
+    {
+      "member_id": "member-01",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000001"
+    },
+    {
+      "member_id": "member-02",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000002"
+    },
+    {
+      "member_id": "member-03",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000003"
+    },
+    {
+      "member_id": "member-04",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000004"
+    },
+    {
+      "member_id": "member-05",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000005"
+    },
+    {
+      "member_id": "member-06",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000006"
+    },
+    {
+      "member_id": "member-07",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000007"
+    },
+    {
+      "member_id": "member-08",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000008"
+    },
+    {
+      "member_id": "member-09",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000009"
+    },
+    {
+      "member_id": "member-10",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000010"
+    },
+    {
+      "member_id": "member-11",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000011"
+    },
+    {
+      "member_id": "member-12",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000012"
+    },
+    {
+      "member_id": "member-13",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000013"
+    },
+    {
+      "member_id": "member-14",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000014"
+    },
+    {
+      "member_id": "member-15",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000015"
+    },
+    {
+      "member_id": "member-16",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000016"
+    },
+    {
+      "member_id": "member-17",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000017"
+    },
+    {
+      "member_id": "member-18",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000018"
+    },
+    {
+      "member_id": "member-19",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000019"
+    },
+    {
+      "member_id": "member-20",
+      "month": 2,
+      "status": "verified",
+      "amount_paise": 455000,
+      "utr": "020000000020"
+    },
+    {
+      "member_id": "member-01",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000001"
+    },
+    {
+      "member_id": "member-02",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000002"
+    },
+    {
+      "member_id": "member-03",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000003"
+    },
+    {
+      "member_id": "member-04",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000004"
+    },
+    {
+      "member_id": "member-05",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000005"
+    },
+    {
+      "member_id": "member-06",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000006"
+    },
+    {
+      "member_id": "member-07",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000007"
+    },
+    {
+      "member_id": "member-08",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000008"
+    },
+    {
+      "member_id": "member-09",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000009"
+    },
+    {
+      "member_id": "member-10",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000010"
+    },
+    {
+      "member_id": "member-11",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000011"
+    },
+    {
+      "member_id": "member-12",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000012"
+    },
+    {
+      "member_id": "member-13",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000013"
+    },
+    {
+      "member_id": "member-14",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000014"
+    },
+    {
+      "member_id": "member-15",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000015"
+    },
+    {
+      "member_id": "member-16",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000016"
+    },
+    {
+      "member_id": "member-17",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000017"
+    },
+    {
+      "member_id": "member-18",
+      "month": 3,
+      "status": "verified",
+      "amount_paise": 445000,
+      "utr": "030000000018"
+    },
+    {
+      "member_id": "member-19",
+      "month": 3,
+      "status": "rejected",
+      "amount_paise": 444900,
+      "utr": "030000000019"
+    },
+    {
+      "member_id": "member-20",
+      "month": 3,
+      "status": "needs_review",
+      "amount_paise": 445000,
+      "utr": null
+    },
+    {
+      "member_id": "member-01",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000001"
+    },
+    {
+      "member_id": "member-02",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000002"
+    },
+    {
+      "member_id": "member-03",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000003"
+    },
+    {
+      "member_id": "member-04",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000004"
+    },
+    {
+      "member_id": "member-05",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000005"
+    },
+    {
+      "member_id": "member-06",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000006"
+    },
+    {
+      "member_id": "member-07",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000007"
+    },
+    {
+      "member_id": "member-08",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000008"
+    },
+    {
+      "member_id": "member-09",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000009"
+    },
+    {
+      "member_id": "member-10",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000010"
+    },
+    {
+      "member_id": "member-11",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000011"
+    },
+    {
+      "member_id": "member-12",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000012"
+    },
+    {
+      "member_id": "member-13",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000013"
+    },
+    {
+      "member_id": "member-14",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000014"
+    },
+    {
+      "member_id": "member-15",
+      "month": 4,
+      "status": "verified",
+      "amount_paise": 435000,
+      "utr": "040000000015"
+    },
+    {
+      "member_id": "member-16",
+      "month": 4,
+      "status": "rejected",
+      "amount_paise": 434900,
+      "utr": "040000000016"
+    },
+    {
+      "member_id": "member-17",
+      "month": 4,
+      "status": "needs_review",
+      "amount_paise": 435000,
+      "utr": null
+    },
+    {
+      "member_id": "member-18",
+      "month": 4,
+      "status": "overdue",
+      "amount_paise": 435000,
+      "utr": null
+    },
+    {
+      "member_id": "member-19",
+      "month": 4,
+      "status": "overdue",
+      "amount_paise": 435000,
+      "utr": null
+    },
+    {
+      "member_id": "member-20",
+      "month": 4,
+      "status": "pending",
+      "amount_paise": 435000,
+      "utr": null
+    }
+  ],
+  "counters": {
+    "collected_paise": 32935000,
+    "paid": 73,
+    "total_members": 20,
+    "needs_review": 2,
+    "overdue": 2
+  },
+  "flags": [
+    {
+      "item_id": "review-month-03-member-20",
+      "member_id": "member-20",
+      "month": 3,
+      "reason": "Screenshot claim has no matching independent bank evidence."
+    },
+    {
+      "item_id": "review-month-04-member-17",
+      "member_id": "member-17",
+      "month": 4,
+      "reason": "Reader confidence is below the manual-review threshold."
+    }
+  ],
+  "overdue": [
+    {
+      "member_id": "member-18",
+      "month": 4,
+      "status": "overdue",
+      "amount_paise": 435000,
+      "utr": null
+    },
+    {
+      "member_id": "member-19",
+      "month": 4,
+      "status": "overdue",
+      "amount_paise": 435000,
+      "utr": null
+    }
+  ],
+  "audit_log": [
+    {
+      "id": "audit-001",
+      "actor": "member-01",
+      "action": "payment_submitted",
+      "reason": "Synthetic screenshot claim for month 1.",
+      "timestamp": "2026-01-03T09:00:00+05:30"
+    },
+    {
+      "id": "audit-002",
+      "actor": "system",
+      "action": "payment_processed",
+      "reason": "Reader extracted a complete synthetic payment record.",
+      "timestamp": "2026-01-03T09:00:02+05:30"
+    },
+    {
+      "id": "audit-003",
+      "actor": "system",
+      "action": "payment_claimed",
+      "reason": "Screenshot is a claim while independent evidence is pending.",
+      "timestamp": "2026-01-03T09:00:03+05:30"
+    },
+    {
+      "id": "audit-004",
+      "actor": "system",
+      "action": "payment_verified",
+      "reason": "Synthetic bank evidence matched UTR and amount.",
+      "timestamp": "2026-01-04T10:01:00+05:30"
+    },
+    {
+      "id": "audit-005",
+      "actor": "system",
+      "action": "payment_rejected",
+      "reason": "Month 3 amount was 100 paise below the expected instalment.",
+      "timestamp": "2026-03-04T10:19:00+05:30"
+    },
+    {
+      "id": "audit-006",
+      "actor": "foreman",
+      "action": "admin_override",
+      "reason": "Rejected synthetic month 4 claim after manual amount review.",
+      "timestamp": "2026-04-05T12:00:00+05:30"
+    },
+    {
+      "id": "audit-007",
+      "actor": "foreman",
+      "action": "member_reassigned",
+      "reason": "Synthetic receipt moved from member-12 to member-13 with recorded approval.",
+      "timestamp": "2026-04-05T12:01:00+05:30"
+    },
+    {
+      "id": "audit-auction-01",
+      "actor": "foreman",
+      "action": "auction_winner_recorded",
+      "reason": "Month 1 winner member-01; synthetic discount 1200000 paise.",
+      "timestamp": "2026-01-05T18:00:00+05:30"
+    },
+    {
+      "id": "audit-auction-02",
+      "actor": "foreman",
+      "action": "auction_winner_recorded",
+      "reason": "Month 2 winner member-02; synthetic discount 1400000 paise.",
+      "timestamp": "2026-02-05T18:00:00+05:30"
+    },
+    {
+      "id": "audit-auction-03",
+      "actor": "foreman",
+      "action": "auction_winner_recorded",
+      "reason": "Month 3 winner member-03; synthetic discount 1600000 paise.",
+      "timestamp": "2026-03-05T18:00:00+05:30"
+    },
+    {
+      "id": "audit-auction-04",
+      "actor": "foreman",
+      "action": "auction_winner_recorded",
+      "reason": "Month 4 winner member-04; synthetic discount 1800000 paise.",
+      "timestamp": "2026-04-05T18:00:00+05:30"
+    }
+  ],
+  "statement": [
+    {
+      "month": 1,
+      "instalment_paise": 465000,
+      "dividend_paise": 35000,
+      "late_fee_paise": 0,
+      "prize_paise": 8800000,
+      "status": "verified"
+    },
+    {
+      "month": 2,
+      "instalment_paise": 455000,
+      "dividend_paise": 45000,
+      "late_fee_paise": 0,
+      "prize_paise": 8600000,
+      "status": "verified"
+    },
+    {
+      "month": 3,
+      "instalment_paise": 445000,
+      "dividend_paise": 55000,
+      "late_fee_paise": 0,
+      "prize_paise": 8400000,
+      "status": "verified"
+    },
+    {
+      "month": 4,
+      "instalment_paise": 435000,
+      "dividend_paise": 65000,
+      "late_fee_paise": 0,
+      "prize_paise": 8200000,
+      "status": "verified"
+    }
+  ],
+  "private_bubbles": []
+}

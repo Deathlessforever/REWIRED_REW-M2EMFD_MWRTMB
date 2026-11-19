@@ -88,3 +88,16 @@ def test_foreman_reply_uses_shared_contract(store):
     assert response.status_code == 200
     validator_for("message_response").validate(response.json())
     assert response.json()["bubbles"][0]["type"] == "text"
+
+
+def test_multipart_text_uses_same_command_routing(store):
+    response = TestClient(app).post("/message", files={"sender": (None, "m2"), "text": (None, "dues")})
+    assert response.status_code == 200
+    validator_for("message_response").validate(response.json())
+    assert "Unpaid Member" in response.json()["bubbles"][0]["text"]
+
+
+def test_multipart_extra_fields_are_rejected(store):
+    response = TestClient(app).post("/message", files={"sender": (None, "m2"), "text": (None, "dues"), "member_id": (None, "m1")})
+    assert response.status_code == 422
+    validator_for("error_response").validate(response.json())

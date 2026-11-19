@@ -17,10 +17,32 @@ On macOS/Linux use `.venv/bin/python` in place of `.\.venv\Scripts\python`.
 Open http://127.0.0.1:8000/chat/ and http://127.0.0.1:8000/dashboard/.
 API docs: http://127.0.0.1:8000/docs. No Node build step is required.
 
-Both pages call the backend directly. Each owns its `config.js`; set
-`window.CHITMIRROR_API_BASE` to switch its backend URL (empty means same origin).
-The backend exposes `/health`, `/state`, `/message`, and `/reminders/send`;
-other business endpoints remain separate work. The shared API contract is in `contracts/`.
+Both pages call the backend directly. Set `CHITMIRROR_API_BASE` when starting
+the frontend server to select the backend URL (empty means same origin).
+The shared API contract and examples are in `contracts/`. A separate canned
+stub is available for UI work; it does not perform payment verification.
+Separate origins require backend CORS configuration.
+
+## Stub API
+
+Start the stub with `python -m uvicorn backend.stub:app --port 8001`.
+Start the frontend server with `CHITMIRROR_API_BASE` set to the desired backend
+URL (empty selects the same origin). For example, in PowerShell:
+
+```powershell
+$env:CHITMIRROR_API_BASE = "http://127.0.0.1:8001"
+.\.venv\Scripts\python -m uvicorn backend.main:app --reload
+```
+
+The stub permits the local frontend origins on port 8000; set its
+`CHITMIRROR_ALLOWED_ORIGINS` to a comma-separated list for other origins. For
+canned message results, send `stub:verified`, `stub:duplicate`,
+`stub:wrong_amount`, `stub:needs_review`, `stub:review_request`, or
+`stub:reminder` in the multipart text field. Other messages return a text bubble.
+Responses use the shared synthetic fixtures in `data/fixtures/`. The stub
+does not persist state, actually send reminders, reset data, or verify screenshots.
+The backend exposes `/health`, `/state`, `/message`, `/demo/load`, and `/reminders/send`; other business
+endpoints remain separate work. The shared API contract is in `contracts/`.
 Separate origins require backend CORS configuration.
 
 The backend stores private demo reminder bubbles in SQLite (`data/chitmirror.db`
@@ -54,8 +76,9 @@ available due information is written into the reminder text where present.
 | D | `dashboard/` and `data/`: independent dashboard, fixtures and scenario |
 
 The original engine and diagram were not present in the repository. A replacement
-pure settlement engine is provided in `backend/chit_engine.py`; the diagram is
-still missing. Amounts are integer paise. The engine rejects fractional-paise
+pure settlement engine is provided in `backend/chit_engine.py`, and
+`chitmirror_final.mermaid` documents the target architecture (some integrations
+remain under development). Amounts are integer paise. The engine rejects fractional-paise
 commission, instalments or dividends rather than silently rounding. Tags are
 additional reconciliation amounts and their sum is reported separately; how
 to account for or return tag surplus is an open product decision. No dividend
@@ -128,9 +151,10 @@ PRs reference `Closes #<issue>` and get a teammate review; keep main green.
 Merge dependencies first unless the issue permits fixtures/stubs. Freeze at
 hour 4:30; then only bug fixes. Follow the issue plan for business features.
 
-Copy `.env.example` to `.env` when needed. Keys are blank and no provider calls
-are made by this scaffold. Future services must load their environment explicitly;
-the current app does not read `.env`.
+Copy `.env.example` to `.env` when needed. Keys are blank by default. The
+provider helper loads `.env` for local use; existing environment variables take
+precedence. Do not commit credentials. Provider requests occur only when their
+checks or the screenshot reader are invoked.
 
 ## T05 provider access smoke checks
 
@@ -139,17 +163,30 @@ masked PNG/JPG payment screenshot, print an unverified field claim plus response
 time, and fail if the call takes 10 seconds or more. They never write a payment,
 call a bank or WhatsApp, or mark a screenshot `verified`.
 
-Set `SARVAM_API_KEY` and `ANTHROPIC_API_KEY` in your local environment (or a
-local, ignored `.env` loaded by your shell), then run:
+Set `SARVAM_API_KEY` and `GROQ_API_KEY` in your local environment or the
+local, ignored `.env`, then run:
 
 ```powershell
 python -m scripts.smoke_sarvam --image .\path\to\synthetic-upi.png
-python -m scripts.smoke_claude --image .\path\to\synthetic-upi.png
+python -m scripts.smoke_groq --image .\path\to\synthetic-upi.png
 ```
 
 Sarvam uses its Document AI `POST /doc-ai/v1/job/parse` workflow, status polling,
-and the documented ZIP download URL. Claude uses `POST /v1/messages` with a
-base64 PNG/JPEG image block. Both commands report missing keys, quota/rate-limit
+and the documented ZIP download URL. Groq uses its vision chat completions API
+with a base64 PNG/JPEG image. Groq replaces Claude at the user's request; check
+hackathon sponsor requirements separately. Both commands report missing keys, quota/rate-limit
 responses, malformed output, failed jobs and timeouts without printing secrets.
 Live provider access is unconfirmed until these commands are run with valid keys
 and a synthetic or masked screenshot. CI uses mocked HTTP only.
+
+
+## Four-month synthetic demo
+
+Start the backend with a fresh demo database, then load the four-month fixture from a foreman session:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/demo/load -ContentType "application/json" -Body '{"actor":"foreman"}'
+python scripts/run_demo_scenarios.py
+```
+
+The loader seeds synthetic members, payment claims, independent bank evidence, and audit events. It never clears existing records; loading requires an empty demo database and subsequent loads are safe no-ops. The foreman dashboard also has a **Load demo** button. No real bank transfer is made.

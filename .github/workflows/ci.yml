@@ -12,9 +12,10 @@ jobs:
           python-version: '3.12'
           cache: pip
       - run: python -m pip install -r requirements-dev.txt
-      - run: python -m playwright install --with-deps chromium
       - run: python scripts/validate_screenshot_manifest.py
-      - run: python -m pytest tests/test_app.py tests/test_contract.py tests/test_group_config.py tests/test_database.py tests/test_settlement.py tests/test_ledger.py tests/test_review.py tests/test_late_fee.py tests/test_screenshot_dataset.py tests/test_payout.py tests/test_reminders.py tests/test_shared_fixtures.py tests/test_messages.py
+      - run: python scripts/run_demo_scenarios.py
+      - run: python -m pytest tests/test_app.py tests/test_contract.py tests/test_group_config.py tests/test_database.py tests/test_settlement.py tests/test_ledger.py tests/test_review.py tests/test_late_fee.py tests/test_screenshot_dataset.py tests/test_payout.py tests/test_reminders.py tests/test_provider_smoke.py tests/test_stub.py tests/test_shared_fixtures.py tests/test_payment_checks.py tests/test_demo.py tests/test_screenshot_reader.py tests/test_messages.py
+      - run: python -m playwright install --with-deps chromium
       - name: Browser smoke tests
         run: |
           python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 &
@@ -24,3 +25,17 @@ jobs:
             sleep 1
           done
           python -m pytest tests/ui --base-url http://127.0.0.1:8000
+      - name: Browser stub switch integration
+        run: |
+          CHITMIRROR_ALLOWED_ORIGINS=http://127.0.0.1:8002 python -m uvicorn backend.stub:app --host 127.0.0.1 --port 8001 &
+          stub_pid=$!
+          CHITMIRROR_API_BASE=http://127.0.0.1:8001 python -m uvicorn backend.main:app --host 127.0.0.1 --port 8002 &
+          frontend_pid=$!
+          trap 'kill "$stub_pid" "$frontend_pid"' EXIT
+          for port in 8001 8002; do
+            for i in {1..30}; do
+              if curl --fail --silent "http://127.0.0.1:$port/health"; then break; fi
+              sleep 1
+            done
+          done
+          CHITMIRROR_TEST_STUB=1 python -m pytest tests/ui/test_stub_switch.py --base-url http://127.0.0.1:8002
