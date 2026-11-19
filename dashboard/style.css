@@ -12,3 +12,6 @@
 
 
 
+
+.demo-load-button{border:0;border-radius:7px;background:#0f766e;color:#fff;padding:8px 11px;font:700 9px "Segoe UI",Arial,sans-serif;white-space:nowrap;cursor:pointer;box-shadow:0 2px 5px #0f766e22}.demo-load-button:hover{background:#0c625c}.demo-load-button:focus-visible{outline:3px solid #1e8e7e;outline-offset:2px}.demo-load-button:disabled{opacity:.58;cursor:wait}.demo-load-button[hidden]{display:none}
+@media(max-width:720px){.demo-load-button{padding:7px 9px}}
