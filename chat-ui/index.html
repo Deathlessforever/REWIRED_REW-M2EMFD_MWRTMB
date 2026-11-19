@@ -3,49 +3,90 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1f3a5f">
+  <meta name="theme-color" content="#f5f7f5">
   <title>ChitMirror Chat</title>
   <link rel="stylesheet" href="./style.css">
-  <script src="/config.js" defer></script>
+  <script src="./config.js" defer></script>
+  <script src="./api.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
-  <main class="app-shell">
-    <header class="brand-header">
-      <div class="brand-mark" aria-hidden="true">₹</div>
-      <div><p class="eyebrow">SAANVI CIRCLE · FOREMAN SPACE</p><h1>Chit<span>Mirror</span> Chat</h1><p class="tagline">Screenshot in. Verified ledger out.</p></div>
+  <main class="page-shell">
+    <header class="page-header">
+      <a class="brand" href="./" aria-label="ChitMirror home">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span>
+          <strong>ChitMirror</strong>
+          <span class="brand-caption">Group payment chat</span>
+        </span>
+      </a>
+      <span class="privacy-note">Demo identities · No messages sent externally</span>
     </header>
 
-    <p id="connection" class="connection" role="status">Checking backend…</p>
-
-    <section class="chat-card" aria-label="Foreman chat workspace">
-      <div class="chat-toolbar">
-        <div><p class="eyebrow">GROUP CHAT</p><h2>Saanvi Circle</h2><p>Review requests and command hints</p></div>
-        <label class="sender-picker">Sending as
-          <select id="sender" aria-label="Sending as">
+    <section class="chat-card" aria-label="ChitMirror conversation">
+      <header class="chat-header">
+        <div class="conversation-identity">
+          <span class="group-avatar" aria-hidden="true">CM</span>
+          <div>
+            <h1>Chit group</h1>
+            <p id="connection" role="status" aria-live="polite">Connecting to the API…</p>
+          </div>
+        </div>
+        <label class="sender-field" for="sender">
+          <span>Sending as</span>
+          <select id="sender" name="sender" aria-label="Sending as">
             <option value="foreman">Foreman</option>
           </select>
         </label>
+      </header>
+
+      <div id="error-banner" class="error-banner" role="alert" hidden>
+        <p id="error-message"></p>
+        <button id="retry-state" class="text-button" type="button" hidden>Try again</button>
       </div>
 
-      <div class="feed-heading"><h2>Needs review</h2><button id="refresh-queue" type="button">Refresh</button></div>
-      <p id="queue-status" class="queue-status" aria-live="polite">Loading review items…</p>
-      <div id="review-queue" class="review-queue" aria-label="Needs-review bubbles"></div>
+      <section id="conversation" class="conversation" aria-label="Messages">
+        <div id="empty-state" class="empty-state">
+          <span class="empty-icon" aria-hidden="true">↗</span>
+          <h2>Start a conversation</h2>
+          <p>Send a message or share a payment screenshot with your group.</p>
+        </div>
+        <div id="loading-state" class="loading-state" role="status" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Loading group members…</span>
+        </div>
+      </section>
 
-      <div id="message-list" class="message-list" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions">
-        <article class="bubble system-bubble"><span class="bubble-label">ChitMirror</span><p>Foreman commands are parsed into hints. The server remains the source of truth.</p></article>
-      </div>
+      <form id="message-form" class="composer">
+        <div id="image-preview" class="image-preview" hidden>
+          <img id="preview-image" alt="Screenshot selected for sending">
+          <div class="preview-details">
+            <span class="preview-title">Screenshot ready</span>
+            <span class="preview-caption">Attached to your message</span>
+          </div>
+          <button id="remove-image" class="remove-image" type="button" aria-label="Remove screenshot">×</button>
+        </div>
 
-      <form id="composer" class="composer">
-        <label for="message-input">Message or foreman command</label>
-        <textarea id="message-input" rows="3" placeholder="Try: Month 3, Name: Ravi, Discount ₹12,000" required></textarea>
-        <p class="hint-label">Command hints · suggestions only</p>
-        <output id="command-hints" class="command-hints" data-testid="command-hints" aria-live="polite" hidden></output>
-        <div class="composer-footer"><span>Server checks all commands</span><button id="send-message" type="submit">Send message <span aria-hidden="true">→</span></button></div>
+        <label class="message-label" for="message-text">Message</label>
+        <textarea id="message-text" name="text" rows="2" placeholder="Write a message…" aria-label="Write a message"></textarea>
+        <div class="composer-footer">
+          <div class="composer-actions">
+            <button id="attach-button" class="attach-button" type="button" aria-label="Attach a screenshot">
+              <span aria-hidden="true">＋</span>
+              <span>Screenshot</span>
+            </button>
+            <input id="image-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" tabindex="-1" aria-hidden="true">
+            <span id="send-status" class="send-status" role="status" aria-live="polite"></span>
+          </div>
+          <button id="send-button" class="send-button" type="submit" disabled>
+            <span>Send</span>
+            <span aria-hidden="true">↑</span>
+          </button>
+        </div>
+        <p class="composer-disclaimer">Screenshots are claims, not proof of payment.</p>
       </form>
-      <p id="notice" class="notice" aria-live="polite"></p>
     </section>
-    <footer>Demo workspace · Review approval does not verify bank evidence or transfer money.</footer>
+    <footer class="page-footer">Private group conversation · Payment status is reported by the backend and is not independently verified in this chat.</footer>
   </main>
 </body>
 </html>
