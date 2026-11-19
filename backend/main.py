@@ -110,6 +110,8 @@ async def message(request: Request):
     image = None
     if content_type.startswith("multipart/form-data"):
         form = await request.form()
+        if set(form.keys()) - {"sender", "text", "image"}:
+            return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Unexpected message fields."}})
         sender = str(form.get("sender", "")).strip()
         text = str(form.get("text", ""))
         image = form.get("image")
@@ -120,11 +122,15 @@ async def message(request: Request):
             payload = await request.json()
         except Exception:
             return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Expected JSON or multipart form data."}})
-        sender = str(payload.get("sender", "")).strip() if isinstance(payload, dict) else ""
-        text = str(payload.get("text", "")) if isinstance(payload, dict) else ""
+        if not isinstance(payload, dict) or set(payload) - {"sender", "text"}:
+            return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Unexpected message fields."}})
+        sender = str(payload.get("sender", "")).strip()
+        text = str(payload.get("text", ""))
     if not sender:
         return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Sender is required."}})
     if image is None:
+        if not text.strip():
+            return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Message text is required."}})
         db, _ = connect(database_path())
         try:
             try:
