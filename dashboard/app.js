@@ -144,7 +144,10 @@ function statusRow(item, state, type) {
   const entry = helpers.entryFor(state, item.member_id, item.month);
   const amount = entry ? helpers.formatINR(entry.amount_paise) : "—";
   const reason = item.reason || LEDGER_STATUS[item.status]?.label || "No detail recorded";
-  return `<div class="submission"><span class="file-icon">${type === "overdue" ? "⌛" : "▧"}</span><div class="submit-info"><b>${helpers.escapeHtml(name)}</b><small>Month ${helpers.escapeHtml(item.month)} · ${helpers.escapeHtml(reason)}</small></div><strong class="amount">${helpers.escapeHtml(amount)}</strong><span class="status ${type === "overdue" ? "rejected" : "needs-review"}"><i>${type === "overdue" ? "!" : "!"}</i> ${type === "overdue" ? "Overdue" : "Needs review"}</span></div>`;
+  const actions = type === "review"
+    ? `<span class="review-actions"><button type="button" data-review-id="${helpers.escapeHtml(item.item_id)}" data-review-decision="approve">Approve manually</button><button type="button" data-review-id="${helpers.escapeHtml(item.item_id)}" data-review-decision="reject">Reject</button></span>`
+    : "";
+  return `<div class="submission"><span class="file-icon">${type === "overdue" ? "⌛" : "▧"}</span><div class="submit-info"><b>${helpers.escapeHtml(name)}</b><small>Month ${helpers.escapeHtml(item.month)} · ${helpers.escapeHtml(reason)}</small></div><strong class="amount">${helpers.escapeHtml(amount)}</strong><span class="status ${type === "overdue" ? "rejected" : "needs-review"}"><i>!</i> ${type === "overdue" ? "Overdue" : "Needs review"}</span>${actions}</div>`;
 }
 
 function renderForemanPanels(state) {
@@ -356,6 +359,33 @@ async function loadDemo() {
     demoLoadButton.disabled = false;
   }
 }
+
+async function reviewPayment(itemId, decision) {
+  if (currentRole !== "foreman" || !itemId) return;
+  const reason = window.prompt(decision === "approve" ? "Reason for manual approval:" : "Reason for rejection:");
+  if (!reason || !reason.trim()) return;
+  text(elements.stateStatus, "Recording foreman decision…");
+  try {
+    const response = await fetch(apiBase() + "/review", {
+      method: "POST", headers: {"Accept":"application/json","Content-Type":"application/json"},
+      body: JSON.stringify({actor:"foreman",item_id:itemId,decision,reason:reason.trim()})
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error?.message || "Review request failed.");
+    text(elements.stateStatus, decision === "approve" ? "Manual approval recorded. This payment is not independently verified." : "Payment rejected and recorded.");
+    await refresh();
+  } catch (error) {
+    text(elements.stateStatus, error.message || "Could not record review decision.");
+  }
+}
+
+elements.reviewList?.addEventListener("click", event => {
+  const button = event.target.closest("[data-review-decision]");
+  if (!button || button.disabled) return;
+  button.disabled = true;
+  reviewPayment(button.dataset.reviewId, button.dataset.reviewDecision)
+    .finally(() => { button.disabled = false; });
+});
 
 async function sendRemindersNow() {
   if (currentRole !== "foreman" || !sendRemindersButton || sendRemindersButton.disabled) return;
