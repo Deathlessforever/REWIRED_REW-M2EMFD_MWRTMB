@@ -14,7 +14,10 @@ def test_both_frontends_are_served():
         response = client.get(path)
         assert response.status_code == 200
         assert title in response.text
-        for asset in ["config.js", "app.js", "style.css"]:
+        assets = ["config.js", "app.js", "style.css"]
+        if path == "/chat/":
+            assets.extend(["api.js", "shell.css"])
+        for asset in assets:
             assert client.get(path + asset).status_code == 200
 
 
