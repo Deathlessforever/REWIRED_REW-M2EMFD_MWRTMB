@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict
 
 from backend.database import connect
+from backend.demo import load_demo
 from backend.reminders import send_reminders
 from backend.state import get_state
 
@@ -57,6 +58,11 @@ class ReminderRequest(BaseModel):
     actor: str
 
 
+class DemoLoadRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    actor: str
+
+
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, exc: RequestValidationError):
     return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Invalid request."}})
@@ -74,6 +80,20 @@ def reminders_send(payload: ReminderRequest):
     db, context = connect(database_path())
     try:
         return {"sent": send_reminders(db, context, actor=payload.actor, send_now=True)}
+    finally:
+        db.close()
+
+
+@app.post("/demo/load")
+def demo_load(payload: DemoLoadRequest):
+    if payload.actor != "foreman":
+        return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Foreman required."}})
+    db, context = connect(database_path())
+    try:
+        try:
+            return load_demo(db, context, actor=payload.actor)
+        except ValueError as exc:
+            return JSONResponse(status_code=409, content={"error": {"code": "demo_load_conflict", "message": str(exc)}})
     finally:
         db.close()
 
