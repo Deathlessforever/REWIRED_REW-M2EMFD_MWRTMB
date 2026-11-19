@@ -8,12 +8,8 @@ const hintsOutput = document.querySelector("#command-hints");
 const notice = document.querySelector("#notice");
 const composer = document.querySelector("#composer");
 const sendButton = document.querySelector("#send-message");
+const sendStatus = document.querySelector("#send-status");
 let members = [];
-
-function apiUrl(path) {
-  const base = (window.CHITMIRROR_API_BASE || "").replace(/\/$/, "");
-  return base + path;
-}
 
 function showNotice(message, isError) {
   notice.textContent = message || "";
@@ -22,9 +18,8 @@ function showNotice(message, isError) {
 
 async function checkConnection() {
   try {
-    const response = await fetch(apiUrl("/health"), {headers: {Accept: "application/json"}});
-    const payload = await response.json();
-    if (!response.ok || payload.status !== "ok") throw new Error("Health check failed");
+    const payload = await window.ChitMirrorApi.getHealth();
+    if (!payload || payload.status !== "ok") throw new Error("Health check failed");
     connection.textContent = "Backend connected";
     connection.classList.add("connected");
   } catch {
@@ -33,16 +28,56 @@ async function checkConnection() {
   }
 }
 
-function addTextBubble(label, text, kind) {
+function addTimestamp(article, date) {
+  const timestamp = document.createElement("time");
+  timestamp.className = "bubble-time";
+  timestamp.dateTime = date.toISOString();
+  timestamp.textContent = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+  article.append(timestamp);
+}
+
+function addTextBubble(label, text, kind, date) {
   const article = document.createElement("article");
   article.className = "bubble " + (kind || "server-bubble");
+  article.dataset.message = "true";
   const title = document.createElement("span");
   title.className = "bubble-label";
   title.textContent = label;
   const body = document.createElement("p");
   body.textContent = text;
   article.append(title, body);
+  addTimestamp(article, date || new Date());
   messageList.append(article);
+  messageList.scrollTop = messageList.scrollHeight;
+}
+
+function renderResultCard(bubble) {
+  const article = document.createElement("article");
+  article.className = "bubble result-bubble";
+  article.dataset.message = "true";
+  const heading = document.createElement("span");
+  heading.className = "bubble-label";
+  heading.textContent = "Payment result";
+  const details = document.createElement("dl");
+  details.className = "result-details";
+  const amount = bubble.amount_paise == null
+    ? "Not provided"
+    : "₹" + (Number(bubble.amount_paise) / 100).toLocaleString("en-IN", {minimumFractionDigits: 2});
+  [["Status", bubble.status], ["Amount", amount], ["UTR", bubble.utr || "Not available"], ["Reason", bubble.reason]].forEach(function (row) {
+    if (row[1] == null || row[1] === "") return;
+    const term = document.createElement("dt");
+    term.textContent = row[0];
+    const value = document.createElement("dd");
+    value.textContent = String(row[1]);
+    details.append(term, value);
+  });
+  article.append(heading, details);
+  addTimestamp(article, new Date());
+  messageList.append(article);
+  messageList.scrollTop = messageList.scrollHeight;
 }
 
 function setSenderOptions() {
@@ -146,13 +181,7 @@ async function submitReview(itemId, decision, textarea, error, article, actions)
   error.textContent = "";
   Array.from(actions.querySelectorAll("button")).forEach(function(button) { button.disabled = true; });
   try {
-    const response = await fetch(apiUrl("/review"), {
-      method: "POST",
-      headers: {"Accept": "application/json", "Content-Type": "application/json"},
-      body: JSON.stringify({item_id: itemId, decision: decision, reason: reason, actor: "foreman"})
-    });
-    const payload = await response.json().catch(function() { return {}; });
-    if (!response.ok) throw new Error(payload.error && payload.error.message ? payload.error.message : "Review request failed (" + response.status + ").");
+    const payload = await window.ChitMirrorApi.submitReview({item_id: itemId, decision: decision, reason: reason, actor: "foreman"});
     if (payload.item_id !== itemId || payload.decision !== decision) throw new Error("The server returned an unexpected review result.");
     article.remove();
     queueStatus.textContent = decision === "approve" ? "Review approved and recorded." : "Review rejected and recorded.";
@@ -171,8 +200,7 @@ function renderBubble(bubble) {
     return;
   }
   if (bubble.type === "result_card") {
-    const summary = [bubble.status || "Payment result", bubble.amount_paise == null ? "" : "₹" + (Number(bubble.amount_paise) / 100).toLocaleString("en-IN", {minimumFractionDigits: 2}), bubble.utr ? "UTR " + bubble.utr : "", bubble.reason || ""].filter(Boolean).join(" · ");
-    addTextBubble("Payment result", summary, "result-bubble");
+    renderResultCard(bubble);
     return;
   }
   if (bubble.type === "review_request") {
@@ -184,9 +212,7 @@ function renderBubble(bubble) {
 async function loadReviewQueue() {
   queueStatus.textContent = "Loading review items…";
   try {
-    const response = await fetch(apiUrl("/state?role=foreman"), {headers: {Accept: "application/json"}, cache: "no-store"});
-    if (!response.ok) throw new Error("State request failed (" + response.status + ").");
-    const state = await response.json();
+    const state = await window.ChitMirrorApi.getState("foreman");
     if (!state || !Array.isArray(state.members) || !Array.isArray(state.flags)) throw new Error("Shared state response is incomplete.");
     members = state.members;
     setSenderOptions();
@@ -236,23 +262,24 @@ document.querySelector("#refresh-queue").addEventListener("click", loadReviewQue
 
 composer.addEventListener("submit", async function(event) {
   event.preventDefault();
+  if (sendButton.disabled) return;
   const text = messageInput.value.trim();
   if (!text) {
     messageInput.focus();
     return;
   }
+  const senderId = senderPicker.value;
+  const senderLabel = senderPicker.selectedOptions[0] ? senderPicker.selectedOptions[0].textContent : "Foreman";
+  const sentAt = new Date();
+  const outgoingKind = senderId === "foreman" ? "outgoing-bubble foreman-bubble" : "outgoing-bubble member-bubble";
   sendButton.disabled = true;
+  sendButton.setAttribute("aria-busy", "true");
+  sendStatus.hidden = false;
+  sendStatus.textContent = "Sending message…";
   showNotice("", false);
   try {
-    const response = await fetch(apiUrl("/message"), {
-      method: "POST",
-      headers: {"Accept": "application/json", "Content-Type": "application/json"},
-      body: JSON.stringify({sender: senderPicker.value, text: text})
-    });
-    const payload = await response.json().catch(function() { return {}; });
-    if (!response.ok) throw new Error(payload.error && payload.error.message ? payload.error.message : "Message request failed (" + response.status + ").");
-    if (!payload || !Array.isArray(payload.bubbles)) throw new Error("The server returned an invalid chat response.");
-    addTextBubble(senderPicker.options[senderPicker.selectedIndex].text, text, "member-bubble");
+    const payload = await window.ChitMirrorApi.sendMessage(senderId, text);
+    addTextBubble(senderLabel, text, outgoingKind, sentAt);
     payload.bubbles.forEach(renderBubble);
     messageInput.value = "";
     updateCommandHints();
@@ -261,7 +288,21 @@ composer.addEventListener("submit", async function(event) {
     showNotice(error.message || "Message could not be sent. Try again.", true);
   } finally {
     sendButton.disabled = false;
+    sendButton.removeAttribute("aria-busy");
+    sendStatus.textContent = "";
+    sendStatus.hidden = true;
   }
+});
+
+messageInput.addEventListener("keydown", function(event) {
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    event.preventDefault();
+    composer.requestSubmit();
+  }
+});
+
+Array.from(messageList.querySelectorAll(".bubble")).forEach(function(article) {
+  addTimestamp(article, new Date());
 });
 
 checkConnection();

@@ -14,8 +14,23 @@ def test_both_frontends_are_served():
         response = client.get(path)
         assert response.status_code == 200
         assert title in response.text
-        for asset in ["config.js", "app.js", "style.css"]:
+        if path == "/chat/":
+            assert '<script src="/config.js" defer></script>' in response.text
+            assert '<script src="./config.js" defer></script>' not in response.text
+        assets = ["config.js", "app.js", "style.css"]
+        if path == "/chat/":
+            assets.extend(["api.js", "shell.css"])
+        for asset in assets:
             assert client.get(path + asset).status_code == 200
+
+
+def test_frontend_config_exposes_api_base_from_environment(monkeypatch):
+    monkeypatch.setenv("CHITMIRROR_API_BASE", "http://127.0.0.1:8001")
+
+    response = client.get("/config.js")
+
+    assert response.status_code == 200
+    assert 'window.CHITMIRROR_API_BASE = "http://127.0.0.1:8001";' in response.text
 
 
 def test_t06_demo_csv_scenarios_validate_against_contract():
