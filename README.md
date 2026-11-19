@@ -141,9 +141,10 @@ PRs reference `Closes #<issue>` and get a teammate review; keep main green.
 Merge dependencies first unless the issue permits fixtures/stubs. Freeze at
 hour 4:30; then only bug fixes. Follow the issue plan for business features.
 
-Copy `.env.example` to `.env` when needed. Keys are blank and no provider calls
-are made by this scaffold. Future services must load their environment explicitly;
-the current app does not read `.env`.
+Copy `.env.example` to `.env` when needed. Keys are blank by default. The
+provider helper loads `.env` for local use; existing environment variables take
+precedence. Do not commit credentials. Provider requests occur only when their
+checks or the screenshot reader are invoked.
 
 ## T05 provider access smoke checks
 
@@ -152,8 +153,8 @@ masked PNG/JPG payment screenshot, print an unverified field claim plus response
 time, and fail if the call takes 10 seconds or more. They never write a payment,
 call a bank or WhatsApp, or mark a screenshot `verified`.
 
-Set `SARVAM_API_KEY` and `GROQ_API_KEY` in your local environment (or a
-local, ignored `.env` loaded by your shell), then run:
+Set `SARVAM_API_KEY` and `GROQ_API_KEY` in your local environment or the
+local, ignored `.env`, then run:
 
 ```powershell
 python -m scripts.smoke_sarvam --image .\path\to\synthetic-upi.png

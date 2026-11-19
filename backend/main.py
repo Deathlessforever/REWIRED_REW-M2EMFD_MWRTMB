@@ -6,9 +6,8 @@ import logging
 import os
 from pathlib import Path
 import json
-import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +18,9 @@ from backend.database import connect
 from backend.demo import load_demo
 from backend.reminders import send_reminders
 from backend.state import get_state
+from backend.provider_smoke import ProviderSmokeError
+from backend.screenshot_reader import needs_review_response, read_uploaded_screenshot
+import httpx
 
 ROOT = Path(__file__).resolve().parent.parent
 def database_path():
@@ -91,6 +93,22 @@ def reminders_send(payload: ReminderRequest):
         return {"sent": send_reminders(db, context, actor=payload.actor, send_now=True)}
     finally:
         db.close()
+
+
+@app.post("/message")
+async def message(sender: str = Form(...), text: str = Form(""), image: UploadFile | None = File(None)):
+    """Receive a claim screenshot; OCR can only create a needs-review response."""
+    if not sender.strip() or (not text.strip() and image is None):
+        return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Sender and text or image are required."}})
+    if image is None:
+        return {"bubbles": [{"type": "text", "text": text}]}
+    try:
+        content = await image.read()
+        with httpx.Client() as client:
+            claim = await asyncio.to_thread(read_uploaded_screenshot, image.filename or "screenshot", content, client)
+        return needs_review_response(claim)
+    except ProviderSmokeError as exc:
+        return JSONResponse(status_code=422, content={"error": {"code": "screenshot_reader_error", "message": str(exc)}})
 
 
 @app.post("/demo/load")
