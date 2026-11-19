@@ -28,9 +28,11 @@ def get_state(db, *, role, member_id=None):
                 utr = raw_utr if raw_utr and len(raw_utr) == 12 and raw_utr.isascii() and raw_utr.isdigit() else None
                 if payment_status == "verified" and posted:
                     status = "verified"
-                elif payment_status in ("needs_review", "manual_approved"):
+                elif payment_status == "needs_review":
                     status = "needs_review"
                     flags.append({"item_id": item, "member_id": member_key, "month": month, "reason": "Payment requires review"})
+                elif payment_status == "manual_approved":
+                    status = "manual_approved"
                 elif payment_status == "rejected":
                     status = "rejected"
             entry = {"member_id": member_key, "month": month, "status": status, "amount_paise": amount, "utr": utr}
