@@ -1,268 +1,358 @@
-const connection = document.querySelector("#connection");
-const senderPicker = document.querySelector("#sender");
-const reviewQueue = document.querySelector("#review-queue");
-const queueStatus = document.querySelector("#queue-status");
-const messageList = document.querySelector("#message-list");
-const messageInput = document.querySelector("#message-input");
-const hintsOutput = document.querySelector("#command-hints");
-const notice = document.querySelector("#notice");
-const composer = document.querySelector("#composer");
-const sendButton = document.querySelector("#send-message");
-let members = [];
+(function () {
+  const senderSelect = document.querySelector("#sender");
+  const conversation = document.querySelector("#conversation");
+  const emptyState = document.querySelector("#empty-state");
+  const loadingState = document.querySelector("#loading-state");
+  const messageForm = document.querySelector("#message-form");
+  const messageText = document.querySelector("#message-text");
+  const imageInput = document.querySelector("#image-input");
+  const imagePreview = document.querySelector("#image-preview");
+  const previewImage = document.querySelector("#preview-image");
+  const sendButton = document.querySelector("#send-button");
+  const sendStatus = document.querySelector("#send-status");
+  const connection = document.querySelector("#connection");
+  const errorBanner = document.querySelector("#error-banner");
+  const errorMessage = document.querySelector("#error-message");
+  const retryState = document.querySelector("#retry-state");
+  const objectUrls = new Set();
+  let selectedImage = null;
+  let previewUrl = null;
+  let sending = false;
+  let loading = false;
 
-function apiUrl(path) {
-  const base = (window.CHITMIRROR_API_BASE || "").replace(/\/$/, "");
-  return base + path;
-}
-
-function showNotice(message, isError) {
-  notice.textContent = message || "";
-  notice.classList.toggle("error", Boolean(isError));
-}
-
-async function checkConnection() {
-  try {
-    const response = await fetch(apiUrl("/health"), {headers: {Accept: "application/json"}});
-    const payload = await response.json();
-    if (!response.ok || payload.status !== "ok") throw new Error("Health check failed");
-    connection.textContent = "Backend connected";
-    connection.classList.add("connected");
-  } catch {
-    connection.textContent = "Backend unavailable — check the server and API URL.";
-    connection.classList.add("failed");
+  function selectedSenderName() {
+    const option = senderSelect.selectedOptions[0];
+    return option ? option.textContent : "Foreman";
   }
-}
 
-function addTextBubble(label, text, kind) {
-  const article = document.createElement("article");
-  article.className = "bubble " + (kind || "server-bubble");
-  const title = document.createElement("span");
-  title.className = "bubble-label";
-  title.textContent = label;
-  const body = document.createElement("p");
-  body.textContent = text;
-  article.append(title, body);
-  messageList.append(article);
-}
-
-function setSenderOptions() {
-  const selected = senderPicker.value || "foreman";
-  senderPicker.replaceChildren();
-  const foreman = document.createElement("option");
-  foreman.value = "foreman";
-  foreman.textContent = "Foreman";
-  senderPicker.append(foreman);
-  members.forEach(function(member) {
-    const option = document.createElement("option");
-    option.value = member.id;
-    option.textContent = member.name;
-    senderPicker.append(option);
-  });
-  senderPicker.value = selected;
-  if (!senderPicker.value) senderPicker.value = "foreman";
-  reviewQueue.hidden = senderPicker.value !== "foreman";
-}
-
-function renderReviewCard(item) {
-  if (!item || typeof item.item_id !== "string" || !item.item_id.trim()) return;
-  const existing = reviewQueue.querySelector('[data-item-id="' + CSS.escape(item.item_id) + '"]');
-  if (existing) return;
-  const member = members.find(function(candidate) { return candidate.id === item.member_id; });
-  const article = document.createElement("article");
-  article.className = "bubble review-bubble";
-  article.dataset.itemId = item.item_id;
-
-  const header = document.createElement("div");
-  header.className = "review-card-heading";
-  const title = document.createElement("span");
-  title.className = "bubble-label";
-  title.textContent = "Needs review";
-  const badge = document.createElement("span");
-  badge.className = "review-badge";
-  badge.textContent = "Foreman action";
-  header.append(title, badge);
-
-  const details = document.createElement("p");
-  details.className = "review-details";
-  const detailParts = [];
-  if (member) detailParts.push(member.name);
-  if (Number.isInteger(Number(item.month))) detailParts.push("Month " + Number(item.month));
-  details.textContent = detailParts.join(" · ");
-
-  const reason = document.createElement("p");
-  reason.className = "review-reason";
-  reason.textContent = item.reason || "A payment was flagged for manual review.";
-
-  const label = document.createElement("label");
-  const inputId = "review-reason-" + item.item_id;
-  label.htmlFor = inputId;
-  label.textContent = "Reason for your decision";
-  const textarea = document.createElement("textarea");
-  textarea.id = inputId;
-  textarea.dataset.testid = "review-reason-" + item.item_id;
-  textarea.rows = 2;
-  textarea.required = true;
-  textarea.placeholder = "Explain the evidence you checked";
-  textarea.setAttribute("aria-describedby", "review-error-" + item.item_id);
-
-  const error = document.createElement("p");
-  error.className = "field-error";
-  error.id = "review-error-" + item.item_id;
-  error.setAttribute("aria-live", "polite");
-
-  const actions = document.createElement("div");
-  actions.className = "review-actions";
-  ["approve", "reject"].forEach(function(decision) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = decision === "approve" ? "approve-button" : "reject-button";
-    button.dataset.testid = "review-" + decision + "-" + item.item_id;
-    button.textContent = decision === "approve" ? "Approve" : "Reject";
-    button.addEventListener("click", function() {
-      submitReview(item.item_id, decision, textarea, error, article, actions);
-    });
-    actions.append(button);
-  });
-
-  article.append(header);
-  if (details.textContent) article.append(details);
-  article.append(reason, label, textarea, error, actions);
-  reviewQueue.append(article);
-}
-
-async function submitReview(itemId, decision, textarea, error, article, actions) {
-  if (senderPicker.value !== "foreman") {
-    error.textContent = "Only the foreman can submit a review decision.";
-    return;
+  function updateEmptyState() {
+    emptyState.hidden = conversation.querySelectorAll(".message").length > 0;
   }
-  const reason = textarea.value.trim();
-  if (!reason) {
-    error.textContent = "Enter a reason before approving or rejecting.";
-    textarea.setAttribute("aria-invalid", "true");
-    textarea.focus();
-    return;
-  }
-  textarea.removeAttribute("aria-invalid");
-  error.textContent = "";
-  Array.from(actions.querySelectorAll("button")).forEach(function(button) { button.disabled = true; });
-  try {
-    const response = await fetch(apiUrl("/review"), {
-      method: "POST",
-      headers: {"Accept": "application/json", "Content-Type": "application/json"},
-      body: JSON.stringify({item_id: itemId, decision: decision, reason: reason, actor: "foreman"})
-    });
-    const payload = await response.json().catch(function() { return {}; });
-    if (!response.ok) throw new Error(payload.error && payload.error.message ? payload.error.message : "Review request failed (" + response.status + ").");
-    if (payload.item_id !== itemId || payload.decision !== decision) throw new Error("The server returned an unexpected review result.");
-    article.remove();
-    queueStatus.textContent = decision === "approve" ? "Review approved and recorded." : "Review rejected and recorded.";
-    showNotice("Decision recorded by the server.", false);
-    await loadReviewQueue();
-  } catch (requestError) {
-    Array.from(actions.querySelectorAll("button")).forEach(function(button) { button.disabled = false; });
-    error.textContent = requestError.message || "Could not record this decision. Try again.";
-  }
-}
 
-function renderBubble(bubble) {
-  if (!bubble || typeof bubble !== "object") return;
-  if (bubble.type === "text" || bubble.type === "reminder") {
-    addTextBubble("ChitMirror", bubble.text || "", "server-bubble");
-    return;
+  function updateSendButton() {
+    sendButton.disabled = sending || (!messageText.value.trim() && !selectedImage);
   }
-  if (bubble.type === "result_card") {
-    const summary = [bubble.status || "Payment result", bubble.amount_paise == null ? "" : "₹" + (Number(bubble.amount_paise) / 100).toLocaleString("en-IN", {minimumFractionDigits: 2}), bubble.utr ? "UTR " + bubble.utr : "", bubble.reason || ""].filter(Boolean).join(" · ");
-    addTextBubble("Payment result", summary, "result-bubble");
-    return;
-  }
-  if (bubble.type === "review_request") {
-    renderReviewCard(bubble);
-    addTextBubble("ChitMirror", "A payment was flagged for foreman review.", "server-bubble");
-  }
-}
 
-async function loadReviewQueue() {
-  queueStatus.textContent = "Loading review items…";
-  try {
-    const response = await fetch(apiUrl("/state?role=foreman"), {headers: {Accept: "application/json"}, cache: "no-store"});
-    if (!response.ok) throw new Error("State request failed (" + response.status + ").");
-    const state = await response.json();
-    if (!state || !Array.isArray(state.members) || !Array.isArray(state.flags)) throw new Error("Shared state response is incomplete.");
-    members = state.members;
-    setSenderOptions();
-    if (senderPicker.value === "foreman") {
-      reviewQueue.replaceChildren();
-      state.flags.forEach(renderReviewCard);
-      queueStatus.textContent = state.flags.length ? state.flags.length + " item" + (state.flags.length === 1 ? "" : "s") + " need foreman review." : "No open review items.";
-    } else {
-      reviewQueue.replaceChildren();
-      queueStatus.textContent = "Review actions are available to the foreman.";
+  function showError(message, canRetryState) {
+    errorMessage.textContent = message;
+    errorBanner.hidden = false;
+    retryState.hidden = !canRetryState;
+  }
+
+  function clearError() {
+    errorBanner.hidden = true;
+    errorMessage.textContent = "";
+    retryState.hidden = true;
+  }
+
+  function clearPreview(revokeUrl) {
+    if (revokeUrl && previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      objectUrls.delete(previewUrl);
     }
-    return state;
-  } catch (error) {
-    queueStatus.textContent = "Review queue unavailable. " + (error.message || "Check the shared state endpoint.");
-    return null;
+    previewUrl = null;
+    selectedImage = null;
+    previewImage.removeAttribute("src");
+    imagePreview.hidden = true;
+    imageInput.value = "";
+    updateSendButton();
   }
-}
 
-function parseCommandHints(text) {
-  const hints = [];
-  const month = /\bmonth\s+(\d+)\b/i.exec(text);
-  const name = /\bname\s*[:=]\s*([^,;\n]+)/i.exec(text);
-  const discount = /\bdiscount\s*(?:₹|rs\.?\s*|inr\s*)?([\d,]+(?:\.\d{1,2})?)/i.exec(text);
-  if (month) hints.push("Month " + Number(month[1]));
-  if (name && name[1].trim()) hints.push("Name " + name[1].trim());
-  if (discount) hints.push("Discount ₹" + discount[1].replace(/,/g, ""));
-  return hints;
-}
-
-function updateCommandHints() {
-  const hints = parseCommandHints(messageInput.value);
-  if (!hints.length) {
-    hintsOutput.hidden = true;
-    hintsOutput.textContent = "";
-    return;
+  function setLoading(value) {
+    loading = value;
+    loadingState.hidden = !loading;
+    senderSelect.disabled = loading || sending;
+    connection.textContent = loading ? "Loading conversation…" : connection.textContent;
   }
-  hintsOutput.hidden = false;
-  hintsOutput.textContent = "Hints only — server validates: " + hints.join(" · ");
-}
 
-senderPicker.addEventListener("change", function() {
-  reviewQueue.hidden = senderPicker.value !== "foreman";
-  updateCommandHints();
-});
-messageInput.addEventListener("input", updateCommandHints);
-document.querySelector("#refresh-queue").addEventListener("click", loadReviewQueue);
-
-composer.addEventListener("submit", async function(event) {
-  event.preventDefault();
-  const text = messageInput.value.trim();
-  if (!text) {
-    messageInput.focus();
-    return;
+  function addTimestamp(container, date) {
+    const timestamp = document.createElement("time");
+    timestamp.dateTime = date.toISOString();
+    timestamp.textContent = new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit"
+    }).format(date);
+    container.append(timestamp);
   }
-  sendButton.disabled = true;
-  showNotice("", false);
-  try {
-    const response = await fetch(apiUrl("/message"), {
-      method: "POST",
-      headers: {"Accept": "application/json", "Content-Type": "application/json"},
-      body: JSON.stringify({sender: senderPicker.value, text: text})
+
+  function appendMessage(kind, contents, date) {
+    const message = document.createElement("article");
+    message.className = `message message-${kind}`;
+    const heading = document.createElement("div");
+    heading.className = "message-heading";
+    const sender = document.createElement("span");
+    sender.className = "message-sender";
+    sender.textContent = kind === "user" ? selectedSenderName() : "ChitMirror";
+    heading.append(sender);
+    addTimestamp(heading, date || new Date());
+    message.append(heading, contents);
+    conversation.append(message);
+    updateEmptyState();
+    conversation.scrollTop = conversation.scrollHeight;
+  }
+
+  function renderTextBubble(bubble) {
+    const text = document.createElement("p");
+    text.className = "bubble-text";
+    text.textContent = bubble.text;
+    return text;
+  }
+
+  function renderResultCard(bubble) {
+    const card = document.createElement("section");
+    card.className = `structured-card result-card status-${bubble.status}`;
+    const labels = {
+      verified: "Verified",
+      duplicate: "Duplicate",
+      wrong_amount: "Wrong amount",
+      needs_review: "Needs review"
+    };
+    const title = document.createElement("h2");
+    title.className = "card-title";
+    title.textContent = "Payment result";
+    const status = document.createElement("span");
+    status.className = "status-pill";
+    status.textContent = labels[bubble.status];
+    const statusRow = document.createElement("div");
+    statusRow.className = "result-status";
+    statusRow.append(title, status);
+    const details = document.createElement("dl");
+    details.className = "result-details";
+    const amount = typeof bubble.amount_paise === "number"
+      ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(bubble.amount_paise / 100)
+      : "Not provided";
+    const rows = [
+      ["Amount", amount],
+      ["UTR", bubble.utr || "Not available"],
+      ["Reason", bubble.reason]
+    ];
+    rows.forEach(function (row) {
+      const term = document.createElement("dt");
+      term.textContent = row[0];
+      const value = document.createElement("dd");
+      value.textContent = row[1];
+      details.append(term, value);
     });
-    const payload = await response.json().catch(function() { return {}; });
-    if (!response.ok) throw new Error(payload.error && payload.error.message ? payload.error.message : "Message request failed (" + response.status + ").");
-    if (!payload || !Array.isArray(payload.bubbles)) throw new Error("The server returned an invalid chat response.");
-    addTextBubble(senderPicker.options[senderPicker.selectedIndex].text, text, "member-bubble");
-    payload.bubbles.forEach(renderBubble);
-    messageInput.value = "";
-    updateCommandHints();
-    messageList.scrollTop = messageList.scrollHeight;
-  } catch (error) {
-    showNotice(error.message || "Message could not be sent. Try again.", true);
-  } finally {
-    sendButton.disabled = false;
+    const disclaimer = document.createElement("p");
+    disclaimer.className = "card-disclaimer";
+    disclaimer.textContent = "Status reported by the backend; this chat does not independently verify bank evidence.";
+    card.append(statusRow, details, disclaimer);
+    return card;
   }
-});
 
-checkConnection();
-loadReviewQueue();
+  function renderReviewCard(bubble) {
+    const card = document.createElement("section");
+    card.className = "structured-card review-card";
+    const title = document.createElement("h2");
+    title.className = "card-title";
+    title.textContent = "Review requested";
+    const reason = document.createElement("p");
+    reason.textContent = bubble.reason;
+    const reference = document.createElement("p");
+    reference.className = "card-reference";
+    reference.textContent = `Reference: ${bubble.item_id}`;
+    card.append(title, reason, reference);
+    return card;
+  }
+
+  function renderReminderCard(bubble) {
+    const card = document.createElement("section");
+    card.className = "structured-card reminder-card";
+    const title = document.createElement("h2");
+    title.className = "card-title";
+    title.textContent = "Payment reminder";
+    const text = document.createElement("p");
+    text.textContent = bubble.text;
+    card.append(title, text);
+    return card;
+  }
+
+  function renderBubble(bubble) {
+    switch (bubble.type) {
+      case "text":
+        return renderTextBubble(bubble);
+      case "result_card":
+        return renderResultCard(bubble);
+      case "review_request":
+        return renderReviewCard(bubble);
+      case "reminder":
+        return renderReminderCard(bubble);
+      default:
+        throw new Error("The API returned an unsupported message type.");
+    }
+  }
+
+  function populateMembers(state) {
+    if (!Array.isArray(state.members)) {
+      throw new Error("The API returned an invalid member list.");
+    }
+    const currentValue = senderSelect.value;
+    senderSelect.replaceChildren(new Option("Foreman", "foreman"));
+    state.members.forEach(function (member) {
+      const option = new Option(`${member.name} (${member.id})`, member.id);
+      senderSelect.add(option);
+    });
+    senderSelect.value = currentValue;
+    if (senderSelect.value !== currentValue) {
+      senderSelect.value = "foreman";
+    }
+  }
+
+  async function loadState() {
+    clearError();
+    setLoading(true);
+    connection.textContent = "Loading conversation…";
+    try {
+      const state = await window.ChitMirrorApi.getState(senderSelect.value);
+      if (senderSelect.value === "foreman") {
+        populateMembers(state);
+      }
+      if (!Array.isArray(state.private_bubbles)) {
+        throw new Error("The API returned an invalid conversation state.");
+      }
+      connection.textContent = "Connected to the group API";
+    } catch (error) {
+      connection.textContent = "API unavailable";
+      showError(error.message, true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  senderSelect.addEventListener("change", function () {
+    conversation.querySelectorAll(".message").forEach(function (message) {
+      message.remove();
+    });
+    updateEmptyState();
+    loadState();
+  });
+
+  messageText.addEventListener("input", updateSendButton);
+
+  function selectScreenshot(file) {
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      clearPreview(true);
+      showError("Choose a PNG, JPEG, or WebP screenshot.", false);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      clearPreview(true);
+      showError("Screenshots must be 10 MB or smaller.", false);
+      return;
+    }
+    clearError();
+    clearPreview(true);
+    selectedImage = file;
+    previewUrl = URL.createObjectURL(file);
+    objectUrls.add(previewUrl);
+    previewImage.src = previewUrl;
+    imagePreview.hidden = false;
+    updateSendButton();
+  }
+
+  imageInput.addEventListener("change", function () {
+    selectScreenshot(imageInput.files && imageInput.files[0]);
+  });
+
+  document.addEventListener("paste", function (event) {
+    const items = Array.from(event.clipboardData?.items || []);
+    const imageItem = items.find(item => item.type.startsWith("image/"));
+    if (!imageItem) return;
+    const file = imageItem.getAsFile();
+    if (file) { event.preventDefault(); selectScreenshot(file); }
+  });
+
+  messageForm.addEventListener("dragover", function (event) {
+    if (Array.from(event.dataTransfer?.items || []).some(item => item.type.startsWith("image/"))) event.preventDefault();
+  });
+  messageForm.addEventListener("drop", function (event) {
+    const file = Array.from(event.dataTransfer?.files || []).find(item => item.type.startsWith("image/"));
+    if (!file) return;
+    event.preventDefault();
+    selectScreenshot(file);
+  });
+
+  document.querySelector("#attach-button").addEventListener("click", function () {
+    imageInput.click();
+  });
+
+  document.querySelector("#remove-image").addEventListener("click", function () {
+    clearPreview(true);
+  });
+
+  retryState.addEventListener("click", loadState);
+
+  messageForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const text = messageText.value;
+    if (sending || (!text.trim() && !selectedImage)) {
+      return;
+    }
+
+    const sentImage = selectedImage;
+    const sentPreviewUrl = previewUrl;
+    sending = true;
+    senderSelect.disabled = true;
+    messageText.disabled = true;
+    imageInput.disabled = true;
+    sendStatus.textContent = "Sending…";
+    sendButton.querySelector("span").textContent = "Sending";
+    updateSendButton();
+    clearError();
+
+    try {
+      const response = await window.ChitMirrorApi.sendMessage(senderSelect.value, text, sentImage);
+      if (!response || !Array.isArray(response.bubbles)) {
+        throw new Error("The API returned an invalid message response.");
+      }
+      const userContents = document.createElement("div");
+      userContents.className = "user-message-content";
+      if (text.trim()) {
+        const paragraph = document.createElement("p");
+        paragraph.className = "bubble-text";
+        paragraph.textContent = text;
+        userContents.append(paragraph);
+      }
+      if (sentImage && sentPreviewUrl) {
+        const image = document.createElement("img");
+        image.className = "sent-image";
+        image.src = sentPreviewUrl;
+        image.alt = "Screenshot shared in this conversation";
+        userContents.append(image);
+      }
+      appendMessage("user", userContents, new Date());
+      response.bubbles.forEach(function (bubble) {
+        appendMessage("backend", renderBubble(bubble), new Date());
+      });
+      messageText.value = "";
+      if (sentPreviewUrl) {
+        previewUrl = null;
+        selectedImage = null;
+        previewImage.removeAttribute("src");
+        imagePreview.hidden = true;
+        imageInput.value = "";
+      }
+      updateSendButton();
+    } catch (error) {
+      showError(error.message, false);
+    } finally {
+      sending = false;
+      senderSelect.disabled = loading;
+      messageText.disabled = false;
+      imageInput.disabled = false;
+      sendStatus.textContent = "";
+      sendButton.querySelector("span").textContent = "Send";
+      updateSendButton();
+    }
+  });
+
+  window.addEventListener("beforeunload", function () {
+    objectUrls.forEach(function (url) {
+      URL.revokeObjectURL(url);
+    });
+  });
+
+  updateSendButton();
+  loadState();
+})();
