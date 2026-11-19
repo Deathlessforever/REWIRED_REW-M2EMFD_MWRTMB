@@ -16,9 +16,10 @@ def test_ui_uses_shared_backend_environment(page, base_url, page_path):
       form.append('sender', 'member-07');
       form.append('text', 'stub:wrong_amount');
       const reply = await fetch(base + '/message', {method: 'POST', body: form}).then(r => r.json());
-      return {base, members: state.members.length, months: state.months.length, status: reply.bubbles[0].status};
+      const command = await fetch(base + '/message', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({sender: 'member-07', text: 'statement'})}).then(r => r.json());
+      return {base, members: state.members.length, months: state.months.length, status: reply.bubbles[0].status, statement: command.bubbles[0].text.includes('Statement for Member 07')};
     }""")
-    assert result == {"base": "http://127.0.0.1:8001", "members": 20, "months": 4, "status": "wrong_amount"}
+    assert result == {"base": "http://127.0.0.1:8001", "members": 20, "months": 4, "status": "wrong_amount", "statement": True}
 
 
 @pytest.mark.skipif(os.environ.get("CHITMIRROR_TEST_STUB") != "1", reason="requires separate stub and frontend servers")

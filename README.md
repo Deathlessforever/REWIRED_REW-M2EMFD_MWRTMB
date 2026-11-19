@@ -41,7 +41,7 @@ canned message results, send `stub:verified`, `stub:duplicate`,
 `stub:reminder` in the multipart text field. Other messages return a text bubble.
 Responses use the shared synthetic fixtures in `data/fixtures/`. The stub
 does not persist state, actually send reminders, reset data, or verify screenshots.
-The backend exposes `/health`, `/state`, and `/reminders/send`; other business
+The backend exposes `/health`, `/state`, `/message`, `/demo/load`, and `/reminders/send`; other business
 endpoints remain separate work. The shared API contract is in `contracts/`.
 Separate origins require backend CORS configuration.
 
@@ -55,6 +55,16 @@ applicable stage is sent when it starts again; missed stages aren't replayed.
 These are app bubbles, not real WhatsApp messages. `/state?role=member&member_id=...`
 returns only the selected member's private bubbles; the demo selector is not
 authentication, so this is not a security boundary against impersonation.
+`POST /message` accepts a selected `sender` and returns that sender's dues,
+statement and private reminders; it never accepts a target `member_id` in the
+request, which keeps command replies member-scoped. The sender selector remains
+a demo identity, not authentication.
+
+The chat's statement reply uses the shared statement schema only: month,
+instalment, dividend, late fee, prize and status. Dates, descriptions and
+running balances are not present in that schema, so the UI does not invent them.
+Reminder bubbles carry only `type` and `text` under the shared bubble schema;
+available due information is written into the reminder text where present.
 
 ## Team folders
 

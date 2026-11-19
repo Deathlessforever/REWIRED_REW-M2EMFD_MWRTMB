@@ -1,0 +1,12 @@
+{
+  "bubbles": [
+    {
+      "type": "text",
+      "text": "Private reminders for Member 07"
+    },
+    {
+      "type": "reminder",
+      "text": "Synthetic private reminder: month 4 instalment for Member 07 is due on 2026-04-05."
+    }
+  ]
+}

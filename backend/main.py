@@ -7,14 +7,16 @@ import os
 from pathlib import Path
 import json
 
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
+from starlette.datastructures import UploadFile
 
 from backend.database import connect
+from backend.messages import handle_message
 from backend.demo import load_demo
 from backend.reminders import send_reminders
 from backend.state import get_state
@@ -63,6 +65,12 @@ class ReminderRequest(BaseModel):
     actor: str
 
 
+class MessageRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    sender: str
+    text: str
+
+
 class DemoLoadRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     actor: str
@@ -96,14 +104,41 @@ def reminders_send(payload: ReminderRequest):
 
 
 @app.post("/message")
-async def message(sender: str = Form(...), text: str = Form(""), image: UploadFile | None = File(None)):
-    """Receive a claim screenshot; OCR can only create a needs-review response."""
+async def message(request: Request):
+    """Route member text commands and screenshots through one endpoint."""
+    image = None
+    try:
+        content_type = request.headers.get("content-type", "").split(";", 1)[0].lower()
+        if content_type == "application/json":
+            payload = MessageRequest.model_validate(await request.json())
+        elif content_type in {"multipart/form-data", "application/x-www-form-urlencoded"}:
+            form = await request.form()
+            if set(form.keys()) - {"sender", "text", "image"}:
+                raise ValueError("Unexpected form field")
+            image = form.get("image")
+            if image is not None and not isinstance(image, UploadFile):
+                raise ValueError("Invalid image")
+            payload = MessageRequest.model_validate({"sender": form.get("sender"), "text": form.get("text", "")})
+        else:
+            raise ValueError("Unsupported content type")
+    except (ValueError, ValidationError):
+        return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Invalid message request."}})
+    sender, text = payload.sender.strip(), payload.text.strip()
     if not sender.strip() or (not text.strip() and image is None):
         return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": "Sender and text or image are required."}})
     if image is None:
-        return {"bubbles": [{"type": "text", "text": text}]}
+        db, _ = connect(database_path())
+        try:
+            try:
+                return handle_message(db, sender=sender, text=text)
+            except ValueError as exc:
+                return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": str(exc)}})
+        finally:
+            db.close()
     try:
-        content = await image.read()
+        content = await image.read(10 * 1024 * 1024 + 1)
+        if len(content) > 10 * 1024 * 1024:
+            raise ProviderSmokeError("Screenshot exceeds 10 MiB.")
         with httpx.Client() as client:
             claim = await asyncio.to_thread(read_uploaded_screenshot, image.filename or "screenshot", content, client)
         return needs_review_response(claim)

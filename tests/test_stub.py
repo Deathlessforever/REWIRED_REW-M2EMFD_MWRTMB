@@ -12,6 +12,18 @@ def test_browser_cors_preflight():
     assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:8000"
 
 
+def test_json_chat_commands_are_accepted_by_stub():
+    response = client.post("/message", json={"sender": "member-07", "text": "statement"})
+    assert response.status_code == 200
+    validator_for("message_response").validate(response.json())
+    assert "Statement for Member 07" in response.json()["bubbles"][0]["text"]
+    other = client.post("/message", json={"sender": "member-08", "text": "statement"})
+    assert "Statement for Member 08" in other.json()["bubbles"][0]["text"]
+    assert "Statement for Member 07" not in str(other.json())
+    invalid = client.post("/message", json={"sender": "member-07", "text": "dues", "member_id": "member-08"})
+    assert invalid.status_code == 422
+
+
 @pytest.mark.parametrize("status", ["verified", "duplicate", "wrong_amount", "needs_review"])
 def test_each_result_is_contract_valid(status):
     response = client.post("/message", data={"sender": "member-7", "text": f"stub:{status}"})

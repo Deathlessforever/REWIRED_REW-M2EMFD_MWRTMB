@@ -2,6 +2,10 @@ const connection = document.querySelector("#connection");
 const senderPicker = document.querySelector("#sender");
 const reviewQueue = document.querySelector("#review-queue");
 const queueStatus = document.querySelector("#queue-status");
+const reminderSection = document.querySelector("#reminder-section");
+const reminderStatus = document.querySelector("#reminder-status");
+const reminderFeed = document.querySelector("#reminder-feed");
+const reminderCount = document.querySelector("#reminder-count");
 const messageList = document.querySelector("#message-list");
 const messageInput = document.querySelector("#message-input");
 const hintsOutput = document.querySelector("#command-hints");
@@ -39,19 +43,49 @@ function addTimestamp(article, date) {
   article.append(timestamp);
 }
 
-function addTextBubble(label, text, kind, date) {
+function addTextBubble(label, text, kind, dateOrTestId) {
   const article = document.createElement("article");
   article.className = "bubble " + (kind || "server-bubble");
   article.dataset.message = "true";
+  if (typeof dateOrTestId === "string") article.dataset.testid = dateOrTestId;
   const title = document.createElement("span");
   title.className = "bubble-label";
   title.textContent = label;
   const body = document.createElement("p");
   body.textContent = text;
   article.append(title, body);
-  addTimestamp(article, date || new Date());
+  addTimestamp(article, dateOrTestId instanceof Date ? dateOrTestId : new Date());
   messageList.append(article);
   messageList.scrollTop = messageList.scrollHeight;
+  return article;
+}
+
+function addReminderBubble(text, target) {
+  const article = document.createElement("article");
+  article.className = "bubble reminder-bubble";
+  article.dataset.testid = "reminder-bubble";
+  article.dataset.memberScoped = "true";
+  const title = document.createElement("span");
+  title.className = "bubble-label";
+  title.textContent = "Private reminder";
+  const stamp = document.createElement("time");
+  const now = new Date();
+  stamp.dateTime = now.toISOString();
+  stamp.textContent = now.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+  const body = document.createElement("p");
+  body.textContent = text || "";
+  article.append(title, stamp, body);
+  (target || messageList).append(article);
+  return article;
+}
+
+function clearConversation() {
+  Array.from(messageList.children).forEach(function(child, index) {
+    if (index > 0) child.remove();
+  });
+  reminderFeed.replaceChildren();
+  reminderCount.textContent = "";
+  showNotice("", false);
 }
 
 function renderResultCard(bubble) {
@@ -96,6 +130,7 @@ function setSenderOptions() {
   senderPicker.value = selected;
   if (!senderPicker.value) senderPicker.value = "foreman";
   reviewQueue.hidden = senderPicker.value !== "foreman";
+  reminderSection.hidden = senderPicker.value === "foreman";
 }
 
 function renderReviewCard(item) {
@@ -195,8 +230,21 @@ async function submitReview(itemId, decision, textarea, error, article, actions)
 
 function renderBubble(bubble) {
   if (!bubble || typeof bubble !== "object") return;
-  if (bubble.type === "text" || bubble.type === "reminder") {
-    addTextBubble("ChitMirror", bubble.text || "", "server-bubble");
+  if (bubble.type === "reminder") {
+    addReminderBubble(bubble.text);
+    return;
+  }
+  if (bubble.type === "text") {
+    const text = bubble.text || "";
+    if (/^Dues for /.test(text)) {
+      addTextBubble("Dues", text, "dues-bubble", "dues-result");
+    } else if (/^Statement for /.test(text)) {
+      addTextBubble("Statement", text, "statement-bubble", "statement-result");
+    } else if (/^(No private reminders|Private reminders for)/.test(text)) {
+      addTextBubble("Private reminders", text, "reminder-bubble", "reminder-header");
+    } else {
+      addTextBubble("ChitMirror", text, "server-bubble");
+    }
     return;
   }
   if (bubble.type === "result_card") {
@@ -231,11 +279,40 @@ async function loadReviewQueue() {
   }
 }
 
+async function loadMemberContext() {
+  const memberId = senderPicker.value;
+  if (memberId === "foreman") {
+    reminderSection.hidden = true;
+    reminderFeed.replaceChildren();
+    reminderStatus.textContent = "";
+    reminderCount.textContent = "";
+    return;
+  }
+  reminderSection.hidden = false;
+  reminderFeed.replaceChildren();
+  reminderCount.textContent = "";
+  reminderStatus.textContent = "Loading private reminders…";
+  try {
+    const state = await window.ChitMirrorApi.getState("member", memberId);
+    if (senderPicker.value !== memberId) return;
+    if (!state || !Array.isArray(state.private_bubbles)) throw new Error("Shared state response is incomplete.");
+    const bubbles = state.private_bubbles.filter(function(bubble) { return bubble && bubble.type === "reminder"; });
+    bubbles.forEach(function(bubble) { addReminderBubble(bubble.text, reminderFeed); });
+    reminderCount.textContent = bubbles.length ? bubbles.length + (bubbles.length === 1 ? " reminder" : " reminders") : "";
+    reminderStatus.textContent = bubbles.length ? "" : "No private reminders for this sender.";
+  } catch (error) {
+    if (senderPicker.value !== memberId) return;
+    reminderStatus.textContent = "Private reminders unavailable. " + (error.message || "Check the shared state endpoint.");
+  }
+}
+
 function parseCommandHints(text) {
   const hints = [];
   const month = /\bmonth\s+(\d+)\b/i.exec(text);
   const name = /\bname\s*[:=]\s*([^,;\n]+)/i.exec(text);
   const discount = /\bdiscount\s*(?:₹|rs\.?\s*|inr\s*)?([\d,]+(?:\.\d{1,2})?)/i.exec(text);
+  const memberCommand = /\b(dues?|statement|reminders?)\b/i.exec(text);
+  if (memberCommand) hints.push("Selected-sender " + memberCommand[1].toLowerCase());
   if (month) hints.push("Month " + Number(month[1]));
   if (name && name[1].trim()) hints.push("Name " + name[1].trim());
   if (discount) hints.push("Discount ₹" + discount[1].replace(/,/g, ""));
@@ -254,8 +331,10 @@ function updateCommandHints() {
 }
 
 senderPicker.addEventListener("change", function() {
-  reviewQueue.hidden = senderPicker.value !== "foreman";
+  clearConversation();
+  setSenderOptions();
   updateCommandHints();
+  loadMemberContext();
 });
 messageInput.addEventListener("input", updateCommandHints);
 document.querySelector("#refresh-queue").addEventListener("click", loadReviewQueue);
@@ -279,7 +358,12 @@ composer.addEventListener("submit", async function(event) {
   showNotice("", false);
   try {
     const payload = await window.ChitMirrorApi.sendMessage(senderId, text);
+    if (senderPicker.value !== senderId) return;
     addTextBubble(senderLabel, text, outgoingKind, sentAt);
+    if (!payload.bubbles.length) {
+      addTextBubble("ChitMirror", "No details are available for this command.", "server-bubble", "empty-result");
+      showNotice("No details are available for this command.", false);
+    }
     payload.bubbles.forEach(renderBubble);
     messageInput.value = "";
     updateCommandHints();
@@ -306,4 +390,4 @@ Array.from(messageList.querySelectorAll(".bubble")).forEach(function(article) {
 });
 
 checkConnection();
-loadReviewQueue();
+loadReviewQueue().then(loadMemberContext);

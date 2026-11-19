@@ -1,0 +1,8 @@
+{
+  "bubbles": [
+    {
+      "type": "text",
+      "text": "Statement for Member 07\nThe shared statement schema includes month, instalment, dividend, late fee, prize and status; dates, descriptions and running balances are not provided.\nMonth 1 · instalment ₹4,650.00 · dividend ₹350.00 · late fee ₹0.00 · prize ₹88,000.00 · verified\nMonth 2 · instalment ₹4,550.00 · dividend ₹450.00 · late fee ₹0.00 · prize ₹86,000.00 · verified\nMonth 3 · instalment ₹4,450.00 · dividend ₹550.00 · late fee ₹0.00 · prize ₹84,000.00 · verified\nMonth 4 · instalment ₹4,350.00 · dividend ₹650.00 · late fee ₹0.00 · prize ₹82,000.00 · verified"
+    }
+  ]
+}

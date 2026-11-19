@@ -15,14 +15,14 @@
   <main class="app-shell">
     <header class="brand-header">
       <div class="brand-mark" aria-hidden="true">₹</div>
-      <div><p class="eyebrow">SAANVI CIRCLE · FOREMAN SPACE</p><h1>Chit<span>Mirror</span> Chat</h1><p class="tagline">Screenshot in. Verified ledger out.</p></div>
+      <div><p class="eyebrow">SAANVI CIRCLE · CHAT</p><h1>Chit<span>Mirror</span> Chat</h1><p class="tagline">Screenshot in. Verified ledger out.</p></div>
     </header>
 
     <p id="connection" class="connection" role="status">Checking backend…</p>
 
-    <section class="chat-card" aria-label="Foreman chat workspace">
+    <section class="chat-card" aria-label="Chat workspace">
       <div class="chat-toolbar">
-        <div><p class="eyebrow">GROUP CHAT</p><h2>Saanvi Circle</h2><p>Review requests and command hints</p></div>
+        <div><p class="eyebrow">GROUP CHAT</p><h2>Saanvi Circle</h2><p>Member commands, review requests and private reminders</p></div>
         <label class="sender-picker">Sending as
           <select id="sender" aria-label="Sending as">
             <option value="foreman">Foreman</option>
@@ -34,16 +34,22 @@
       <p id="queue-status" class="queue-status" aria-live="polite">Loading review items…</p>
       <div id="review-queue" class="review-queue" aria-label="Needs-review bubbles"></div>
 
+      <div id="reminder-section" class="reminder-section" hidden>
+        <div class="feed-heading"><h2>Private reminders</h2><span id="reminder-count" class="reminder-count"></span></div>
+        <p id="reminder-status" class="queue-status" aria-live="polite">Select a member to load private reminders.</p>
+        <div id="reminder-feed" class="reminder-feed" aria-label="Private reminder bubbles"></div>
+      </div>
+
       <div id="message-list" class="message-list" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions">
-        <article class="bubble system-bubble"><span class="bubble-label">ChitMirror</span><p>Foreman commands are parsed into hints. The server remains the source of truth.</p></article>
+        <article class="bubble system-bubble"><span class="bubble-label">ChitMirror</span><p>Commands are suggestions; the server returns the source-of-truth reply for the selected sender.</p></article>
       </div>
 
       <form id="composer" class="composer">
         <label for="message-input">Message or foreman command</label>
-        <textarea id="message-input" rows="3" placeholder="Try: Month 3, Name: Ravi, Discount ₹12,000" required></textarea>
+        <textarea id="message-input" rows="3" placeholder="Try: dues, statement, reminders, Month 3, Name: Ravi" required></textarea>
         <p class="hint-label">Command hints · suggestions only</p>
         <output id="command-hints" class="command-hints" data-testid="command-hints" aria-live="polite" hidden></output>
-        <div class="composer-footer"><span>Server checks all commands · Ctrl+Enter to send</span><div class="send-controls"><span id="send-status" class="send-status" role="status" aria-live="polite" hidden></span><button id="send-message" type="submit">Send message <span aria-hidden="true">→</span></button></div></div>
+        <div class="composer-footer"><span>Server checks commands and selects private replies · Ctrl+Enter to send</span><div class="send-controls"><span id="send-status" class="send-status" role="status" aria-live="polite" hidden></span><button id="send-message" type="submit">Send message <span aria-hidden="true">→</span></button></div></div>
       </form>
       <p id="notice" class="notice" aria-live="polite"></p>
     </section>
