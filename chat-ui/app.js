@@ -262,6 +262,7 @@ document.querySelector("#refresh-queue").addEventListener("click", loadReviewQue
 
 composer.addEventListener("submit", async function(event) {
   event.preventDefault();
+  if (sendButton.disabled) return;
   const text = messageInput.value.trim();
   if (!text) {
     messageInput.focus();
@@ -278,7 +279,6 @@ composer.addEventListener("submit", async function(event) {
   showNotice("", false);
   try {
     const payload = await window.ChitMirrorApi.sendMessage(senderId, text);
-    if (!payload || !Array.isArray(payload.bubbles)) throw new Error("The server returned an invalid chat response.");
     addTextBubble(senderLabel, text, outgoingKind, sentAt);
     payload.bubbles.forEach(renderBubble);
     messageInput.value = "";

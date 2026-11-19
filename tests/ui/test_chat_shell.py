@@ -82,6 +82,49 @@ def test_chat_api_validation_error_is_visible_and_recoverable(page, base_url):
     expect(page.get_by_role("button", name="Send message")).to_be_enabled()
 
 
+def test_chat_rejects_malformed_api_response_without_fake_success(page, base_url):
+    state = json.loads(STATE_FIXTURE.read_text(encoding="utf-8"))
+    page.route("**/health", serve_json({"status": "ok"}))
+    page.route(re.compile(r".*/state\?role=foreman$"), serve_json(state))
+    page.route(re.compile(r".*/message$"), serve_json({"bubbles": [{"type": "unexpected", "text": "invalid"}]}))
+    page.goto(f"{base_url}/chat/")
+    page.get_by_label("Message or foreman command").fill("Malformed response test")
+    page.get_by_role("button", name="Send message").click()
+    expect(page.locator("#notice")).to_contain_text("does not match the shared API contract")
+    expect(page.locator(".outgoing-bubble")).to_have_count(0)
+
+
+def test_chat_prevents_duplicate_submissions_while_pending(page, base_url):
+    state = json.loads(STATE_FIXTURE.read_text(encoding="utf-8"))
+    page.route("**/health", serve_json({"status": "ok"}))
+    page.route(re.compile(r".*/state\?role=foreman$"), serve_json(state))
+    page.add_init_script("""(() => {
+      const originalFetch = window.fetch.bind(window);
+      window.__messageRequests = 0;
+      window.fetch = (input, options) => {
+        if (String(input).endsWith('/message')) {
+          window.__messageRequests += 1;
+          return new Promise(resolve => {
+            window.__resolveMessage = () => resolve(new Response(
+              JSON.stringify({bubbles: [{type: 'text', text: 'One reply'}]}),
+              {status: 200, headers: {'Content-Type': 'application/json'}}
+            ));
+          });
+        }
+        return originalFetch(input, options);
+      };
+    })()""")
+    page.goto(f"{base_url}/chat/")
+    page.get_by_label("Message or foreman command").fill("Only send once")
+    page.get_by_role("button", name="Send message").click()
+    expect(page.get_by_role("button", name="Send message")).to_be_disabled()
+    page.locator("#composer").evaluate("form => form.requestSubmit()")
+    assert page.evaluate("window.__messageRequests") == 1
+    page.evaluate("window.__resolveMessage()")
+    expect(page.get_by_text("One reply")).to_be_visible()
+    expect(page.locator(".outgoing-bubble")).to_have_count(1)
+
+
 def test_review_queue_empty_state_is_clear(page, base_url):
     state = json.loads(STATE_FIXTURE.read_text(encoding="utf-8"))
     state["flags"] = []

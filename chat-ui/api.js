@@ -40,7 +40,41 @@
     const body = new FormData();
     body.append("sender", sender);
     body.append("text", text);
-    return request("/message", {method: "POST", headers: {Accept: "application/json"}, body: body});
+    return request("/message", {method: "POST", headers: {Accept: "application/json"}, body: body})
+      .then(validateMessageResponse);
+  }
+
+  function exactKeys(value, expected) {
+    const keys = Object.keys(value).sort();
+    return keys.length === expected.length && keys.every(function(key, index) { return key === expected.slice().sort()[index]; });
+  }
+
+  function validBubble(bubble) {
+    if (!bubble || typeof bubble !== "object" || Array.isArray(bubble)) return false;
+    if (bubble.type === "text") return exactKeys(bubble, ["type", "text"]) && typeof bubble.text === "string";
+    if (bubble.type === "reminder") return exactKeys(bubble, ["type", "text"]) && typeof bubble.text === "string" && Boolean(bubble.text.trim());
+    if (bubble.type === "review_request") {
+      return exactKeys(bubble, ["type", "item_id", "reason"])
+        && typeof bubble.item_id === "string" && Boolean(bubble.item_id.trim())
+        && typeof bubble.reason === "string" && Boolean(bubble.reason.trim());
+    }
+    if (bubble.type === "result_card") {
+      return exactKeys(bubble, ["type", "status", "amount_paise", "utr", "reason"])
+        && ["verified", "duplicate", "wrong_amount", "needs_review"].includes(bubble.status)
+        && (bubble.amount_paise === null || (Number.isSafeInteger(bubble.amount_paise) && bubble.amount_paise >= 0))
+        && (bubble.utr === null || (typeof bubble.utr === "string" && /^[0-9]{12}$/.test(bubble.utr)))
+        && typeof bubble.reason === "string";
+    }
+    return false;
+  }
+
+  function validateMessageResponse(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)
+      || !exactKeys(payload, ["bubbles"]) || !Array.isArray(payload.bubbles)
+      || !payload.bubbles.every(validBubble)) {
+      throw new Error("The server returned a chat response that does not match the shared API contract.");
+    }
+    return payload;
   }
 
   function submitReview(review) {
