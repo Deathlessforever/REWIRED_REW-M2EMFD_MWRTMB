@@ -9,7 +9,7 @@ from pathlib import Path
 
 import httpx
 
-from backend.provider_smoke import ExtractionClaim, ProviderSmokeError, run_sarvam_smoke
+from backend.provider_smoke import ExtractionClaim, ProviderSmokeError, run_groq_smoke, run_sarvam_smoke
 
 
 @dataclass(frozen=True)
@@ -24,12 +24,28 @@ class ScreenshotClaim:
     transaction_time: str | None
     payment_application: str | None
     confidence: float | None
+    readers_agree: bool | None = None
 
     @classmethod
     def from_extraction(cls, extraction: ExtractionClaim) -> "ScreenshotClaim":
         return cls(extraction.utr, extraction.amount_paise, extraction.payee,
                    extraction.transaction_status, extraction.transaction_date,
-                   extraction.transaction_time, extraction.payment_application, None)
+                   extraction.transaction_time, extraction.payment_application, None, None)
+
+    @classmethod
+    def from_two_readers(cls, first: ExtractionClaim, second: ExtractionClaim) -> "ScreenshotClaim":
+        fields = ("utr", "amount_paise", "payee", "transaction_status",
+                  "transaction_date", "transaction_time", "payment_application")
+        values = []
+        comparable = []
+        for field in fields:
+            left, right = getattr(first, field), getattr(second, field)
+            values.append(left)
+            if left is not None or right is not None:
+                comparable.append((left, right))
+        matches = sum(left is not None and right is not None and left == right for left, right in comparable)
+        confidence = matches / len(comparable) if comparable else 0.0
+        return cls(*values, confidence, all(left == right for left, right in comparable))
 
 
 class ScreenshotReaderQueue:
@@ -46,8 +62,13 @@ class ScreenshotReaderQueue:
 
 
 def read_screenshot(image_path: Path, client: httpx.Client) -> ScreenshotClaim:
-    """Run Sarvam's async provider workflow and retain unknown fields as None."""
-    return ScreenshotClaim.from_extraction(run_sarvam_smoke(image_path, client=client))
+    """Read with Sarvam and Groq; any missing or disagreeing second read stays review-only."""
+    first = run_sarvam_smoke(image_path, client=client)
+    try:
+        second = run_groq_smoke(image_path, client=client)
+    except ProviderSmokeError:
+        return ScreenshotClaim.from_extraction(first)
+    return ScreenshotClaim.from_two_readers(first, second)
 
 
 def read_uploaded_screenshot(filename: str, content: bytes, client: httpx.Client) -> ScreenshotClaim:
